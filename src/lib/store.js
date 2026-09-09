@@ -357,6 +357,18 @@ export function StoreProvider({ children }) {
         setDados((d) => ({ ...d, carinhos: d.carinhos.map((c) => (c.id === id ? data : c)) }));
       },
 
+      // Por padrão, só a Hellen vê os carinhos (são recadinhos endereçados
+      // a ela). Ela decide, um a um, se libera pra família visualizadora
+      // ver também — o RLS de "carinhos" já barra quem não é admin de ler
+      // um carinho com visivel_para_familia = false, mesmo tentando direto.
+      async tornarVisivelCarinho(id, visivelParaFamilia) {
+        const data = await tratarErro(
+          supabase.from("carinhos").update({ visivel_para_familia: visivelParaFamilia }).eq("id", id).select().single(),
+          "Não foi possível atualizar."
+        );
+        setDados((d) => ({ ...d, carinhos: d.carinhos.map((c) => (c.id === id ? data : c)) }));
+      },
+
       // Admin aprova (ou reprova/revoga) alguém — só quem já é admin
       // consegue de fato gravar isso, o RLS que garante (ver
       // "perfis_update" no schema.sql).

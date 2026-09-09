@@ -225,8 +225,13 @@ create table if not exists public.carinhos (
   visualizado boolean not null default false,
   favorito boolean not null default false,
   reacao text, -- ex: 'amei', ou null
+  -- Por padrão um carinho é só da Hellen ver (é endereçado a ela). Ela
+  -- decide, um a um, se libera pra família visualizadora ver também.
+  visivel_para_familia boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+alter table public.carinhos add column if not exists visivel_para_familia boolean not null default false;
 
 -- ---------------------------------------------------------------------
 -- Acesso familiar — vários usuários de verdade (nome + telefone + senha,
@@ -377,10 +382,13 @@ begin
   end loop;
 end $$;
 
--- "carinhos" segue o mesmo padrão (quem vê é quem pode visualizar,
--- quem edita — reagir, favoritar, apagar — é só admin). Continua sem
--- policy de insert: quem grava um carinho novo é a rota do servidor,
--- com a service role key, que ignora RLS.
+-- "carinhos" é parecido, mas com uma diferença: um carinho é endereçado
+-- à Hellen, então por padrão só ela (admin) vê. Quem é "visualizador"
+-- só enxerga um carinho se ela marcou visivel_para_familia = true nele
+-- — e essa regra é aplicada aqui no banco, não só escondida na tela.
+-- Reagir, favoritar, apagar e tornar visível continuam só admin.
+-- Continua sem policy de insert: quem grava um carinho novo é a rota do
+-- servidor, com a service role key, que ignora RLS.
 drop policy if exists "dono_select" on public.carinhos;
 drop policy if exists "dono_update" on public.carinhos;
 drop policy if exists "dono_delete" on public.carinhos;
@@ -389,7 +397,7 @@ drop policy if exists "admin_update" on public.carinhos;
 drop policy if exists "admin_delete" on public.carinhos;
 
 create policy "familia_select" on public.carinhos for select
-  using (public.pode_visualizar());
+  using (public.is_admin() or (public.pode_visualizar() and visivel_para_familia));
 create policy "admin_update" on public.carinhos for update
   using (public.is_admin());
 create policy "admin_delete" on public.carinhos for delete

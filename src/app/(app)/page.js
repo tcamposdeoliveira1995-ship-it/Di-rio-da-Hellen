@@ -16,7 +16,7 @@ export default function HomePage() {
     useStore();
   const primeiroNome = (meuPerfil?.nome || "Hellen").trim().split(" ")[0] || "Hellen";
 
-  const carinhoNaoVisto = carinhos.find((c) => !c.visualizado);
+  const carinhoNaoVisto = souAdmin && carinhos.find((c) => !c.visualizado);
   const autorCarinho = carinhoNaoVisto && criancas.find((c) => c.id === carinhoNaoVisto.crianca_id);
 
   const frase = useMemo(

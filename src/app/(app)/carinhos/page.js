@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X, Loader2, Heart, Star, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, X, Loader2, Heart, Star, Download, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import Card from "@/components/Card";
 import EmptyState from "@/components/EmptyState";
 import { useStore } from "@/lib/store";
@@ -12,12 +12,23 @@ import { formatarDataLonga } from "@/lib/date";
 const AVATARES = ["🌸", "🦋", "⭐", "😊", "💗", "🌈", "🐱", "🐶"];
 
 export default function CarinhosPage() {
-  const { criancas, carinhos, adicionarCrianca, atualizarCrianca, reagirCarinho, favoritarCarinho, souAdmin } =
-    useStore();
+  const {
+    criancas,
+    carinhos,
+    adicionarCrianca,
+    atualizarCrianca,
+    reagirCarinho,
+    favoritarCarinho,
+    tornarVisivelCarinho,
+    souAdmin,
+  } = useStore();
   const [filtro, setFiltro] = useState("todos");
   const [gerenciarAberto, setGerenciarAberto] = useState(criancas.length === 0);
   const [formAberto, setFormAberto] = useState(false);
 
+  // Os carinhos são recadinhos/desenhos endereçados à Hellen — por padrão
+  // só ela vê. Quem é "visualizador" só recebe (o próprio banco, via RLS,
+  // já filtra isso) os carinhos que ela marcou como visíveis pra família.
   const listados =
     filtro === "todos"
       ? carinhos
@@ -29,9 +40,14 @@ export default function CarinhosPage() {
     <div className="space-y-6">
       <header>
         <h1 className="font-display text-2xl text-ink">Carinhos 💌</h1>
-        <p className="text-sm text-muted">Os desenhos e recadinhos que você recebeu no Cantinho da Helô.</p>
+        <p className="text-sm text-muted">
+          {souAdmin
+            ? "Os desenhos e recadinhos que você recebeu no Cantinho da Helô."
+            : "Os carinhos que a Hellen escolheu compartilhar com a família."}
+        </p>
       </header>
 
+      {souAdmin && (
       <Card
         title="Pessoas autorizadas"
         icon="👪"
@@ -90,6 +106,7 @@ export default function CarinhosPage() {
           </div>
         )}
       </Card>
+      )}
 
       <div className="flex gap-2">
         <BotaoFiltro ativo={filtro === "todos"} onClick={() => setFiltro("todos")} label="Todos" />
@@ -112,6 +129,7 @@ export default function CarinhosPage() {
                 autor={autor}
                 onReagir={reagirCarinho}
                 onFavoritar={favoritarCarinho}
+                onTornarVisivel={tornarVisivelCarinho}
                 souAdmin={souAdmin}
               />
             );
@@ -206,7 +224,7 @@ function FormularioCrianca({ onFechar, onSalvar }) {
   );
 }
 
-function CarinhoCard({ carinho, autor, onReagir, onFavoritar, souAdmin }) {
+function CarinhoCard({ carinho, autor, onReagir, onFavoritar, onTornarVisivel, souAdmin }) {
   const [url, setUrl] = useState(null);
 
   useEffect(() => {
@@ -250,6 +268,20 @@ function CarinhoCard({ carinho, autor, onReagir, onFavoritar, souAdmin }) {
               }`}
             >
               <Star size={14} /> Favorito
+            </button>
+            <button
+              onClick={() => onTornarVisivel(carinho.id, !carinho.visivel_para_familia)}
+              title={
+                carinho.visivel_para_familia
+                  ? "A família visualizadora consegue ver este carinho"
+                  : "Só você vê este carinho"
+              }
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${
+                carinho.visivel_para_familia ? "bg-burnt text-white" : "bg-cream text-ink"
+              }`}
+            >
+              {carinho.visivel_para_familia ? <Eye size={14} /> : <EyeOff size={14} />}
+              {carinho.visivel_para_familia ? "Visível pra família" : "Tornar visível"}
             </button>
           </>
         ) : (
