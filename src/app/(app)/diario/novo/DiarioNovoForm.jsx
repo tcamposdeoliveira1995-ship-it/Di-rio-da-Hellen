@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Card from "@/components/Card";
 import MoodPicker from "@/components/MoodPicker";
+import CampoArquivo from "@/components/CampoArquivo";
 import { useStore } from "@/lib/store";
 import { hoje, formatarDataLonga } from "@/lib/date";
 
@@ -96,18 +97,12 @@ export default function DiarioNovoForm() {
             onChange={setQueroLembrar}
           />
 
-          <div>
-            <label className="block text-sm text-ink mb-2" htmlFor="foto">
-              Foto do dia (opcional)
-            </label>
-            <input
-              id="foto"
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFoto(e.target.files?.[0] || null)}
-              className="text-sm text-muted"
-            />
-          </div>
+          <CampoArquivo
+            label="Foto do dia (opcional)"
+            arquivo={foto}
+            onSelecionar={setFoto}
+            caminhoExistente={entradaExistente?.foto_path}
+          />
 
           {erro && <p className="text-sm text-burnt">{erro}</p>}
 

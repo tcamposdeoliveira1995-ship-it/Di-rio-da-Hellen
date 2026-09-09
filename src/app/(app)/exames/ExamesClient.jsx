@@ -6,6 +6,7 @@ import { Plus, X, Loader2, FileText } from "lucide-react";
 import Card from "@/components/Card";
 import EmptyState from "@/components/EmptyState";
 import FotoPrivada from "@/components/FotoPrivada";
+import CampoArquivo from "@/components/CampoArquivo";
 import { useStore } from "@/lib/store";
 import { hoje, formatarDataLonga } from "@/lib/date";
 import { CATEGORIAS_EXAME } from "@/lib/constants";
@@ -193,18 +194,12 @@ function FormularioExame({ onFechar, onSalvar }) {
           />
         </div>
 
-        <div>
-          <label className="block text-sm text-ink mb-1" htmlFor="arquivo-exame">
-            Arquivo (PDF, foto ou imagem)
-          </label>
-          <input
-            id="arquivo-exame"
-            type="file"
-            accept="application/pdf,image/*"
-            onChange={(e) => setArquivo(e.target.files?.[0] || null)}
-            className="text-sm text-muted"
-          />
-        </div>
+        <CampoArquivo
+          label="Arquivo (PDF, foto ou imagem)"
+          arquivo={arquivo}
+          onSelecionar={setArquivo}
+          aceitarPdf
+        />
 
         {erro && <p className="text-sm text-burnt">{erro}</p>}
 
