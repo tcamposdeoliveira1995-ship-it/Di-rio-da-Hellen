@@ -118,6 +118,23 @@ export function categoriaDocumentoPorId(id) {
   return CATEGORIAS_DOCUMENTO.find((c) => c.id === id) || CATEGORIAS_DOCUMENTO[6];
 }
 
+export const CATEGORIAS_CONTATO = [
+  { id: "familia", emoji: "👪", label: "Família" },
+  { id: "equipe_medica", emoji: "🩺", label: "Equipe médica" },
+  { id: "util", emoji: "📞", label: "Contatos úteis" },
+];
+
+export function categoriaContatoPorId(id) {
+  return CATEGORIAS_CONTATO.find((c) => c.id === id) || CATEGORIAS_CONTATO[0];
+}
+
+export const TIPOS_CONTATO_UTIL = [
+  { id: "hospital", emoji: "🏥", label: "Hospital" },
+  { id: "laboratorio", emoji: "🧪", label: "Laboratório" },
+  { id: "convenio", emoji: "📋", label: "Convênio" },
+  { id: "farmacia", emoji: "💊", label: "Farmácia" },
+];
+
 export const PERIODOS_RESUMO = [
   { id: "7", label: "Últimos 7 dias", dias: 7 },
   { id: "15", label: "Últimos 15 dias", dias: 15 },

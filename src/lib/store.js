@@ -22,6 +22,9 @@ const ESTADO_VAZIO = {
   eventosJornada: [],
   duvidas: [],
   documentos: [],
+  memorias: [],
+  mural: [],
+  contatosApoio: [],
 };
 
 export function StoreProvider({ children }) {
@@ -35,22 +38,28 @@ export function StoreProvider({ children }) {
     setCarregando(true);
     setErro("");
     try {
-      const [tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada, duvidas, documentos] =
-        await Promise.all([
-          supabase.from("tratamento_info").select("*").eq("user_id", uid).maybeSingle(),
-          supabase.from("ciclos").select("*").eq("user_id", uid).order("numero"),
-          supabase.from("diario").select("*").eq("user_id", uid).order("data", { ascending: false }),
-          supabase.from("sintomas").select("*").eq("user_id", uid).order("data", { ascending: false }),
-          supabase.from("exames").select("*").eq("user_id", uid).order("data", { ascending: false }),
-          supabase.from("agenda").select("*").eq("user_id", uid).order("data"),
-          supabase.from("eventos_jornada").select("*").eq("user_id", uid).order("data"),
-          supabase.from("duvidas").select("*").eq("user_id", uid).order("data", { ascending: false }),
-          supabase.from("documentos").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        ]);
+      const [
+        tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
+        duvidas, documentos, memorias, mural, contatosApoio,
+      ] = await Promise.all([
+        supabase.from("tratamento_info").select("*").eq("user_id", uid).maybeSingle(),
+        supabase.from("ciclos").select("*").eq("user_id", uid).order("numero"),
+        supabase.from("diario").select("*").eq("user_id", uid).order("data", { ascending: false }),
+        supabase.from("sintomas").select("*").eq("user_id", uid).order("data", { ascending: false }),
+        supabase.from("exames").select("*").eq("user_id", uid).order("data", { ascending: false }),
+        supabase.from("agenda").select("*").eq("user_id", uid).order("data"),
+        supabase.from("eventos_jornada").select("*").eq("user_id", uid).order("data"),
+        supabase.from("duvidas").select("*").eq("user_id", uid).order("data", { ascending: false }),
+        supabase.from("documentos").select("*").eq("user_id", uid).order("data", { ascending: false }),
+        supabase.from("memorias").select("*").eq("user_id", uid).order("data", { ascending: false }),
+        supabase.from("mural").select("*").eq("user_id", uid).order("data", { ascending: false }),
+        supabase.from("contatos_apoio").select("*").eq("user_id", uid).order("nome"),
+      ]);
 
-      const primeiroErro = [tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada, duvidas, documentos]
-        .map((r) => r.error)
-        .find(Boolean);
+      const primeiroErro = [
+        tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
+        duvidas, documentos, memorias, mural, contatosApoio,
+      ].map((r) => r.error).find(Boolean);
       if (primeiroErro) throw primeiroErro;
 
       setDados({
@@ -63,6 +72,9 @@ export function StoreProvider({ children }) {
         eventosJornada: eventosJornada.data || [],
         duvidas: duvidas.data || [],
         documentos: documentos.data || [],
+        memorias: memorias.data || [],
+        mural: mural.data || [],
+        contatosApoio: contatosApoio.data || [],
       });
     } catch (err) {
       console.error("Erro ao carregar os dados do Supabase:", err);
@@ -236,6 +248,44 @@ export function StoreProvider({ children }) {
           "Não foi possível adicionar o documento."
         );
         setDados((d) => ({ ...d, documentos: [data, ...d.documentos] }));
+      },
+
+      async adicionarMemoria(memoria, arquivo) {
+        const foto_path = await enviarArquivo(supabase, userId, arquivo);
+        const data = await tratarErro(
+          supabase.from("memorias").insert({ ...memoria, foto_path, user_id: userId }).select().single(),
+          "Não foi possível adicionar a memória."
+        );
+        setDados((d) => ({ ...d, memorias: [data, ...d.memorias] }));
+      },
+
+      async adicionarMural(mensagem, arquivo) {
+        let foto_path = null;
+        if (arquivo) foto_path = await enviarArquivo(supabase, userId, arquivo);
+        const data = await tratarErro(
+          supabase.from("mural").insert({ ...mensagem, foto_path, user_id: userId }).select().single(),
+          "Não foi possível adicionar a mensagem."
+        );
+        setDados((d) => ({ ...d, mural: [data, ...d.mural] }));
+      },
+
+      async adicionarContato(contato) {
+        const data = await tratarErro(
+          supabase.from("contatos_apoio").insert({ ...contato, user_id: userId }).select().single(),
+          "Não foi possível adicionar o contato."
+        );
+        setDados((d) => ({
+          ...d,
+          contatosApoio: [...d.contatosApoio, data].sort((a, b) => a.nome.localeCompare(b.nome)),
+        }));
+      },
+
+      async removerContato(id) {
+        await tratarErro(
+          supabase.from("contatos_apoio").delete().eq("id", id),
+          "Não foi possível remover o contato."
+        );
+        setDados((d) => ({ ...d, contatosApoio: d.contatosApoio.filter((c) => c.id !== id) }));
       },
     };
   }, [supabase, userId, dados]);

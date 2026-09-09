@@ -151,6 +151,52 @@ create table if not exists public.documentos (
 );
 
 -- ---------------------------------------------------------------------
+-- Memórias (Etapa 3) — galeria da jornada, nem tudo precisa ser sobre
+-- tratamento
+-- ---------------------------------------------------------------------
+create table if not exists public.memorias (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  data date,
+  foto_path text not null, -- caminho no Storage (bucket hellen-arquivos)
+  legenda text,
+  descricao text,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
+-- Mural (Etapa 3) — mensagens de quem é próximo da Hellen. Como só ela
+-- tem login por enquanto (acesso familiar é Etapa 4), as mensagens são
+-- registradas por ela mesma (ou por quem estiver ajudando), em nome de
+-- quem escreveu.
+-- ---------------------------------------------------------------------
+create table if not exists public.mural (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  autor text not null,
+  mensagem text not null,
+  foto_path text, -- caminho no Storage (bucket hellen-arquivos)
+  data date not null,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
+-- Minha Rede de Apoio (Etapa 3) — família, equipe médica, contatos úteis
+-- ---------------------------------------------------------------------
+create table if not exists public.contatos_apoio (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  categoria text not null, -- familia | equipe_medica | util
+  nome text not null,
+  telefone text,
+  relacao text,       -- só categoria = familia
+  especialidade text, -- só categoria = equipe_medica
+  hospital text,      -- só categoria = equipe_medica
+  tipo_util text,     -- só categoria = util (hospital | laboratorio | convenio | farmacia)
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
 -- Row Level Security — cada usuário só acessa as próprias linhas.
 -- ---------------------------------------------------------------------
 alter table public.tratamento_info enable row level security;
@@ -162,6 +208,9 @@ alter table public.agenda enable row level security;
 alter table public.eventos_jornada enable row level security;
 alter table public.duvidas enable row level security;
 alter table public.documentos enable row level security;
+alter table public.memorias enable row level security;
+alter table public.mural enable row level security;
+alter table public.contatos_apoio enable row level security;
 
 do $$
 declare
@@ -169,7 +218,8 @@ declare
 begin
   foreach tabela in array array[
     'tratamento_info', 'ciclos', 'diario', 'sintomas',
-    'exames', 'agenda', 'eventos_jornada', 'duvidas', 'documentos'
+    'exames', 'agenda', 'eventos_jornada', 'duvidas', 'documentos',
+    'memorias', 'mural', 'contatos_apoio'
   ]
   loop
     execute format('drop policy if exists "dono_select" on public.%I', tabela);

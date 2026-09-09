@@ -1,10 +1,10 @@
 import {
   Home, Sprout, BookHeart, Pill, Stethoscope, FlaskConical, CalendarDays,
   CircleHelp, LineChart, ClipboardList, FolderOpen,
+  Image, Trophy, Heart, Users,
 } from "lucide-react";
 
-// Itens do menu principal — Etapa 1 (MVP) + Etapa 2 do escopo do projeto.
-// Memórias, Conquistas, Mural e Rede de apoio entram na Etapa 3.
+// Itens do menu principal — Etapas 1, 2 e 3 do escopo do projeto.
 export const NAV_ITEMS = [
   { href: "/", label: "Início", emoji: "🏠", icon: Home },
   { href: "/jornada", label: "Minha Jornada", emoji: "🌱", icon: Sprout },
@@ -16,7 +16,11 @@ export const NAV_ITEMS = [
   { href: "/duvidas", label: "Minhas Dúvidas", emoji: "❓", icon: CircleHelp },
   { href: "/evolucao", label: "Minha Evolução", emoji: "📈", icon: LineChart },
   { href: "/resumo", label: "Resumo para Consulta", emoji: "📋", icon: ClipboardList },
+  { href: "/memorias", label: "Memórias", emoji: "📸", icon: Image },
+  { href: "/conquistas", label: "Conquistas", emoji: "🏆", icon: Trophy },
+  { href: "/mural", label: "Mural", emoji: "💌", icon: Heart },
   { href: "/documentos", label: "Documentos", emoji: "📂", icon: FolderOpen },
+  { href: "/rede-apoio", label: "Minha Rede de Apoio", emoji: "🤍", icon: Users },
 ];
 
 // Barra inferior no mobile — só os principais atalhos, com o botão central
