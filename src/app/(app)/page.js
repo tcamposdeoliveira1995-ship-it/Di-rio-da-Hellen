@@ -12,7 +12,10 @@ import { FRASES_DO_DIA, tipoAgendaPorId } from "@/lib/constants";
 const TIPOS_PROXIMOS_PASSOS = ["consulta", "exame", "tratamento"];
 
 export default function HomePage() {
-  const { tratamentoInfo, ciclos, diario, agenda, atualizarHumorHoje } = useStore();
+  const { tratamentoInfo, ciclos, diario, agenda, carinhos, criancas, atualizarHumorHoje } = useStore();
+
+  const carinhoNaoVisto = carinhos.find((c) => !c.visualizado);
+  const autorCarinho = carinhoNaoVisto && criancas.find((c) => c.id === carinhoNaoVisto.crianca_id);
 
   const frase = useMemo(
     () => FRASES_DO_DIA[new Date().getDate() % FRASES_DO_DIA.length],
@@ -49,6 +52,18 @@ export default function HomePage() {
           </p>
         )}
       </header>
+
+      {carinhoNaoVisto && (
+        <Link href="/carinhos" className="block">
+          <Card className="bg-blush-soft border-burnt">
+            <p className="text-sm font-medium text-ink">💌 Você recebeu um carinho!</p>
+            <p className="text-sm text-muted mt-0.5">
+              {autorCarinho ? `${autorCarinho.nome} fez` : "Alguém fez"}{" "}
+              {carinhoNaoVisto.tipo === "desenho" ? "um desenho" : "um recadinho"} pra você 🎨
+            </p>
+          </Card>
+        </Link>
+      )}
 
       <Card title="Hoje" icon="🌻">
         <p className="text-sm text-muted mb-3">{formatarDataLonga(hoje())}</p>

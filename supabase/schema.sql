@@ -197,6 +197,38 @@ create table if not exists public.contatos_apoio (
 );
 
 -- ---------------------------------------------------------------------
+-- Cantinho da Helô — crianças autorizadas a mandar carinho (desenhos e
+-- recadinhos) pra Hellen. Elas não têm login: quem gerencia essa lista
+-- é a própria Hellen, autenticada. As gravações feitas PELA criança
+-- (inserir em "carinhos") passam por uma rota do servidor usando a
+-- chave secreta do Supabase — por isso não existe policy de "insert"
+-- pública aqui, só as de leitura/atualização da Hellen.
+-- ---------------------------------------------------------------------
+create table if not exists public.criancas (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade, -- quem recebe os carinhos (Hellen)
+  nome text not null,
+  avatar_emoji text not null default '🌸',
+  ativo boolean not null default true,
+  pode_desenhar boolean not null default true,
+  pode_enviar_recado boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.carinhos (
+  id uuid primary key default gen_random_uuid(),
+  destinatario_user_id uuid not null references auth.users (id) on delete cascade,
+  crianca_id uuid not null references public.criancas (id) on delete cascade,
+  tipo text not null, -- desenho | recado
+  mensagem text,
+  arquivo_path text, -- caminho no Storage (bucket hellen-arquivos), só quando tipo = desenho
+  visualizado boolean not null default false,
+  favorito boolean not null default false,
+  reacao text, -- ex: 'amei', ou null
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
 -- Row Level Security — cada usuário só acessa as próprias linhas.
 -- ---------------------------------------------------------------------
 alter table public.tratamento_info enable row level security;
@@ -211,6 +243,8 @@ alter table public.documentos enable row level security;
 alter table public.memorias enable row level security;
 alter table public.mural enable row level security;
 alter table public.contatos_apoio enable row level security;
+alter table public.criancas enable row level security;
+alter table public.carinhos enable row level security;
 
 do $$
 declare
@@ -219,7 +253,7 @@ begin
   foreach tabela in array array[
     'tratamento_info', 'ciclos', 'diario', 'sintomas',
     'exames', 'agenda', 'eventos_jornada', 'duvidas', 'documentos',
-    'memorias', 'mural', 'contatos_apoio'
+    'memorias', 'mural', 'contatos_apoio', 'criancas'
   ]
   loop
     execute format('drop policy if exists "dono_select" on public.%I', tabela);
@@ -245,6 +279,21 @@ begin
     );
   end loop;
 end $$;
+
+-- "carinhos" usa destinatario_user_id (não user_id) e não tem policy de
+-- insert — só a Hellen lê/atualiza (reação, favorito, visualizado); quem
+-- grava um carinho novo é a rota do servidor, com a service role key,
+-- que ignora RLS.
+drop policy if exists "dono_select" on public.carinhos;
+drop policy if exists "dono_update" on public.carinhos;
+drop policy if exists "dono_delete" on public.carinhos;
+
+create policy "dono_select" on public.carinhos for select
+  using (auth.uid() = destinatario_user_id);
+create policy "dono_update" on public.carinhos for update
+  using (auth.uid() = destinatario_user_id);
+create policy "dono_delete" on public.carinhos for delete
+  using (auth.uid() = destinatario_user_id);
 
 -- ---------------------------------------------------------------------
 -- Storage — fotos do diário e arquivos de exames, em bucket privado.

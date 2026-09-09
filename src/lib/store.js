@@ -25,6 +25,8 @@ const ESTADO_VAZIO = {
   memorias: [],
   mural: [],
   contatosApoio: [],
+  criancas: [],
+  carinhos: [],
 };
 
 export function StoreProvider({ children }) {
@@ -40,7 +42,7 @@ export function StoreProvider({ children }) {
     try {
       const [
         tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
-        duvidas, documentos, memorias, mural, contatosApoio,
+        duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos,
       ] = await Promise.all([
         supabase.from("tratamento_info").select("*").eq("user_id", uid).maybeSingle(),
         supabase.from("ciclos").select("*").eq("user_id", uid).order("numero"),
@@ -54,11 +56,13 @@ export function StoreProvider({ children }) {
         supabase.from("memorias").select("*").eq("user_id", uid).order("data", { ascending: false }),
         supabase.from("mural").select("*").eq("user_id", uid).order("data", { ascending: false }),
         supabase.from("contatos_apoio").select("*").eq("user_id", uid).order("nome"),
+        supabase.from("criancas").select("*").eq("user_id", uid).order("nome"),
+        supabase.from("carinhos").select("*").eq("destinatario_user_id", uid).order("created_at", { ascending: false }),
       ]);
 
       const primeiroErro = [
         tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
-        duvidas, documentos, memorias, mural, contatosApoio,
+        duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos,
       ].map((r) => r.error).find(Boolean);
       if (primeiroErro) throw primeiroErro;
 
@@ -75,6 +79,8 @@ export function StoreProvider({ children }) {
         memorias: memorias.data || [],
         mural: mural.data || [],
         contatosApoio: contatosApoio.data || [],
+        criancas: criancas.data || [],
+        carinhos: carinhos.data || [],
       });
     } catch (err) {
       console.error("Erro ao carregar os dados do Supabase:", err);
@@ -286,6 +292,49 @@ export function StoreProvider({ children }) {
           "Não foi possível remover o contato."
         );
         setDados((d) => ({ ...d, contatosApoio: d.contatosApoio.filter((c) => c.id !== id) }));
+      },
+
+      async adicionarCrianca(crianca) {
+        const data = await tratarErro(
+          supabase.from("criancas").insert({ ...crianca, user_id: userId }).select().single(),
+          "Não foi possível adicionar."
+        );
+        setDados((d) => ({
+          ...d,
+          criancas: [...d.criancas, data].sort((a, b) => a.nome.localeCompare(b.nome)),
+        }));
+      },
+
+      async atualizarCrianca(id, parcial) {
+        const data = await tratarErro(
+          supabase.from("criancas").update(parcial).eq("id", id).select().single(),
+          "Não foi possível atualizar."
+        );
+        setDados((d) => ({ ...d, criancas: d.criancas.map((c) => (c.id === id ? data : c)) }));
+      },
+
+      async reagirCarinho(id, reacao) {
+        const data = await tratarErro(
+          supabase.from("carinhos").update({ reacao, visualizado: true }).eq("id", id).select().single(),
+          "Não foi possível reagir."
+        );
+        setDados((d) => ({ ...d, carinhos: d.carinhos.map((c) => (c.id === id ? data : c)) }));
+      },
+
+      async favoritarCarinho(id, favorito) {
+        const data = await tratarErro(
+          supabase.from("carinhos").update({ favorito, visualizado: true }).eq("id", id).select().single(),
+          "Não foi possível favoritar."
+        );
+        setDados((d) => ({ ...d, carinhos: d.carinhos.map((c) => (c.id === id ? data : c)) }));
+      },
+
+      async marcarCarinhoVisualizado(id) {
+        const data = await tratarErro(
+          supabase.from("carinhos").update({ visualizado: true }).eq("id", id).select().single(),
+          "Não foi possível atualizar."
+        );
+        setDados((d) => ({ ...d, carinhos: d.carinhos.map((c) => (c.id === id ? data : c)) }));
       },
     };
   }, [supabase, userId, dados]);

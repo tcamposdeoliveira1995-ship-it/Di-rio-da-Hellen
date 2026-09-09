@@ -30,6 +30,20 @@
   --chart-humor: #9c3f3f;
   --chart-energia: #b8860b;
   --chart-sintomas: #7048a8;
+
+  /* Cantinho da Helô — identidade própria, separada do resto do painel
+     de propósito (é a área infantil, não o diário médico da Hellen).
+     Fundos vivos + texto sempre em --helo-ink (testado: >= 4.5:1 contra
+     todos os fundos abaixo). */
+  --helo-bg: #fdf1fb;
+  --helo-surface: #ffffff;
+  --helo-ink: #3f2a52;
+  --helo-rosa: #ff7ab8;
+  --helo-lilas: #b48ce0;
+  --helo-azul: #6fc3e4;
+  --helo-amarelo: #ffd54f;
+  --helo-verde: #81c995;
+
   --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --font-sans: "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }

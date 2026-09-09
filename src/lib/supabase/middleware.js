@@ -2,9 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
 
-// Só a tela de login fica fora do bloqueio — todo o resto do diário é
-// conteúdo privado da Hellen.
-const PUBLIC_PATHS = ["/login"];
+// A tela de login e o Cantinho da Helô ficam fora do bloqueio — o
+// resto do diário é conteúdo privado da Hellen. O Cantinho é público de
+// propósito: a Helô não tem (e não deveria precisar de) login — ele só
+// alcança as rotas de /api/cantinho/*, que nunca tocam em dados médicos.
+const PUBLIC_PATHS = ["/login", "/cantinho", "/api/cantinho"];
 
 export async function updateSession(request) {
   let response = NextResponse.next({ request });

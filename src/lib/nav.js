@@ -1,7 +1,7 @@
 import {
   Home, Sprout, BookHeart, Pill, Stethoscope, FlaskConical, CalendarDays,
   CircleHelp, LineChart, ClipboardList, FolderOpen,
-  Image, Trophy, Heart, Users,
+  Image, Trophy, Heart, Users, Palette,
 } from "lucide-react";
 
 // Itens do menu principal — Etapas 1, 2 e 3 do escopo do projeto.
@@ -21,6 +21,7 @@ export const NAV_ITEMS = [
   { href: "/mural", label: "Mural", emoji: "💌", icon: Heart },
   { href: "/documentos", label: "Documentos", emoji: "📂", icon: FolderOpen },
   { href: "/rede-apoio", label: "Minha Rede de Apoio", emoji: "🤍", icon: Users },
+  { href: "/carinhos", label: "Carinhos", emoji: "🎨", icon: Palette },
 ];
 
 // Barra inferior no mobile — só os principais atalhos, com o botão central
