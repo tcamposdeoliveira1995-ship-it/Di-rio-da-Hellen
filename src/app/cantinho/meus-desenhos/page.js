@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { lerCriancaSelecionada } from "@/lib/cantinho";
 import { formatarDataLonga } from "@/lib/date";
+import PerfilAtivo from "@/components/cantinho/PerfilAtivo";
 
 export default function MeusDesenhosPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function MeusDesenhosPage() {
 
   return (
     <div className="min-h-screen px-6 py-8">
+      <PerfilAtivo crianca={crianca} />
       <h1 className="text-2xl font-bold text-center mb-6">Meus desenhos 🖼️</h1>
 
       {carinhos === null ? (

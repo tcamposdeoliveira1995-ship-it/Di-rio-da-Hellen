@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { lerCriancaSelecionada, CARTOES_RECADO } from "@/lib/cantinho";
+import PerfilAtivo from "@/components/cantinho/PerfilAtivo";
 
 export default function RecadoPage() {
   const router = useRouter();
@@ -67,6 +68,7 @@ export default function RecadoPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center px-6 py-8 gap-4">
+      <PerfilAtivo crianca={crianca} />
       <h1 className="text-2xl font-bold">Escrever um recadinho 💌</h1>
 
       <div>

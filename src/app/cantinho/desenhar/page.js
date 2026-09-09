@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Undo2, Redo2, Trash2, Pencil, Brush, Eraser, Type, Camera, Loader2 } from "lucide-react";
 import { lerCriancaSelecionada, CORES_PAINT, TAMANHOS, CARIMBOS } from "@/lib/cantinho";
+import PerfilAtivo from "@/components/cantinho/PerfilAtivo";
 
 const LARGURA = 900;
 const ALTURA = 1200;
@@ -296,6 +297,7 @@ export default function DesenharPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <PerfilAtivo crianca={crianca} posicao="top-14" />
       <header className="flex items-center justify-between gap-2 px-3 py-2 shrink-0" style={{ background: "var(--helo-surface)" }}>
         <div className="flex items-center gap-1">
           <BotaoIcone onClick={desfazer} disabled={indiceHistoricoRef.current <= 0} aria-label="Desfazer">
