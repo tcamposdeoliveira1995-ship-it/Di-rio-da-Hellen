@@ -111,10 +111,47 @@ Abra `http://localhost:3000` — você será redirecionada para `/login`.
 
 ## Login e "Esqueci minha senha"
 
-O login é feito pelo Supabase Auth (e-mail + senha). "Esqueci minha
-senha" dispara o e-mail de redefinição do próprio Supabase; ao clicar no
-link, a mesma tela de login reconhece a sessão de recuperação e mostra o
-formulário de nova senha.
+O login é feito pelo Supabase Auth, e aceita e-mail **ou** telefone (quem
+se cadastra por telefone recebe por baixo dos panos um e-mail sintético,
+só pro Supabase Auth aceitar — ver seção "Contas da família" abaixo).
+"Esqueci minha senha" dispara o e-mail de redefinição do próprio
+Supabase quando a conta usa e-mail de verdade; contas por telefone não
+têm e-mail real pra receber esse link, então a tela orienta a pessoa a
+pedir pra Hellen redefinir manualmente.
+
+## Contas da família 👪
+
+Além da Hellen, outras pessoas da família podem ter login — mas só ela
+edita; o resto só visualiza.
+
+- **Cadastro** (`/cadastro`, público): nome, telefone e senha. Não
+  precisa de e-mail — o app gera um e-mail sintético a partir do
+  telefone (`src/lib/contaFamiliar.js`) só pra satisfazer o Supabase
+  Auth, que exige um e-mail pra criar a conta.
+- **Papéis**, guardados na tabela `perfis`:
+  - `pendente` (padrão ao se cadastrar): não vê nada, só uma tela de
+    "aguardando aprovação".
+  - `visualizador`: vê tudo (diário, tratamento, exames, agenda...),
+    mas todo botão de criar/editar/excluir some ou fica desabilitado.
+  - `admin`: só a Hellen. Edita tudo. Quem já tinha conta antes dessa
+    versão vira admin automaticamente ao rodar o schema (backfill).
+- **Aprovação manual**: a Hellen aprova cada pessoa em `/pessoas` (só
+  admin vê essa tela) — promove pra visualizador, ou revoga o acesso.
+  Não existe cadastro livre com acesso automático, de propósito: são
+  dados de saúde.
+- **Segurança é toda via RLS**: as políticas do Postgres (`is_admin()` e
+  `pode_visualizar()`, funções `security definer` que consultam
+  `perfis`) são a barreira de verdade — as telas escondem os botões de
+  edição por usabilidade, mas quem garante que um visualizador não
+  consiga gravar nada é o banco, não a interface.
+- **A Helô não entra aqui.** O Cantinho da Helô continua sem login,
+  como sempre foi — esse sistema de contas é só pro resto da família.
+
+⚠️ **Necessário no painel do Supabase**: em Authentication → Providers →
+Email, desligue "Confirm email" (confirmação de e-mail). Como o
+cadastro por telefone usa um e-mail sintético que ninguém realmente
+recebe, deixar a confirmação ligada trava essas contas pra sempre — elas
+nunca conseguem confirmar e nunca conseguem logar.
 
 ## Resumo para Consulta
 
@@ -154,12 +191,8 @@ tem login, não vê nada médico e só consegue desenhar/mandar recadinhos.
 
 ## O que ainda não está aqui (próxima etapa)
 
-- **Etapa 4**: Notificações, controle de acesso familiar (múltiplos
-  usuários de verdade, com login), backup automático.
+- **Etapa 4**: Notificações, backup automático.
 - Evoluções futuras do Cantinho da Helô: recado de voz, vídeo curto,
   álbum da jornada, cartões de datas especiais, desenhos pra colorir,
   impressão e álbum em PDF (o próprio escopo do módulo já lista essas
   como próximos passos, não como parte da primeira versão).
-
-Além disso, hoje só existe um usuário de verdade no sistema (a Hellen) —
-acesso familiar multiusuário de verdade é parte da Etapa 4.
