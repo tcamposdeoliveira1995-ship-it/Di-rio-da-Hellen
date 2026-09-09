@@ -11,9 +11,9 @@ import { STATUS_CICLO, statusCicloPorId } from "@/lib/constants";
 
 export default function TratamentoClient() {
   const searchParams = useSearchParams();
-  const { tratamentoInfo, ciclos, salvarTratamentoInfo, adicionarCiclo, atualizarCiclo } = useStore();
-  const [editandoInfo, setEditandoInfo] = useState(!tratamentoInfo);
-  const [novoAberto, setNovoAberto] = useState(searchParams.get("novo") === "1" && !!tratamentoInfo);
+  const { tratamentoInfo, ciclos, salvarTratamentoInfo, adicionarCiclo, atualizarCiclo, souAdmin } = useStore();
+  const [editandoInfo, setEditandoInfo] = useState(souAdmin && !tratamentoInfo);
+  const [novoAberto, setNovoAberto] = useState(searchParams.get("novo") === "1" && !!tratamentoInfo && souAdmin);
 
   return (
     <div className="space-y-6">
@@ -26,6 +26,7 @@ export default function TratamentoClient() {
         title="Informações gerais"
         icon="📋"
         action={
+          souAdmin &&
           !editandoInfo && (
             <button onClick={() => setEditandoInfo(true)} className="text-burnt text-sm flex items-center gap-1">
               <Pencil size={14} /> Editar
@@ -43,7 +44,7 @@ export default function TratamentoClient() {
             onCancelar={() => setEditandoInfo(false)}
             permiteCancelar={!!tratamentoInfo}
           />
-        ) : (
+        ) : tratamentoInfo ? (
           <dl className="grid sm:grid-cols-2 gap-3 text-sm">
             <Info label="Nome do tratamento" valor={tratamentoInfo.nome} />
             <Info label="Data de início" valor={tratamentoInfo.data_inicio && formatarDataLonga(tratamentoInfo.data_inicio)} />
@@ -55,6 +56,8 @@ export default function TratamentoClient() {
               valor={tratamentoInfo.jornada_data_inicio && formatarDataLonga(tratamentoInfo.jornada_data_inicio)}
             />
           </dl>
+        ) : (
+          <EmptyState titulo="Nenhuma informação cadastrada ainda" emoji="📋" />
         )}
       </Card>
 
@@ -62,7 +65,7 @@ export default function TratamentoClient() {
         <>
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg text-ink">Ciclos</h2>
-            {!novoAberto && (
+            {souAdmin && !novoAberto && (
               <button
                 onClick={() => setNovoAberto(true)}
                 className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -90,7 +93,7 @@ export default function TratamentoClient() {
           ) : (
             <div className="space-y-3">
               {ciclos.map((ciclo) => (
-                <CicloCard key={ciclo.id} ciclo={ciclo} onAtualizar={atualizarCiclo} />
+                <CicloCard key={ciclo.id} ciclo={ciclo} onAtualizar={atualizarCiclo} souAdmin={souAdmin} />
               ))}
             </div>
           )}
@@ -242,7 +245,7 @@ const CAMPOS_DETALHE_CICLO = [
   ["acompanhante", "Acompanhante"],
 ];
 
-function CicloCard({ ciclo, onAtualizar }) {
+function CicloCard({ ciclo, onAtualizar, souAdmin }) {
   const [aberto, setAberto] = useState(false);
   const [valores, setValores] = useState(() =>
     Object.fromEntries(CAMPOS_DETALHE_CICLO.map(([campo]) => [campo, ciclo[campo] || ""]))
@@ -278,7 +281,7 @@ function CicloCard({ ciclo, onAtualizar }) {
         {aberto ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
       </button>
 
-      {aberto && (
+      {aberto && souAdmin && (
         <div className="mt-4 space-y-3 border-t border-line pt-4">
           <div>
             <label className="block text-sm text-muted mb-1">Status</label>
@@ -316,6 +319,17 @@ function CicloCard({ ciclo, onAtualizar }) {
             {salvando && <Loader2 size={16} className="animate-spin" />}
             Salvar detalhes
           </button>
+        </div>
+      )}
+
+      {aberto && !souAdmin && (
+        <div className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
+          {CAMPOS_DETALHE_CICLO.filter(([campo]) => ciclo[campo]).map(([campo, label]) => (
+            <div key={campo}>
+              <dt className="text-muted text-xs">{label}</dt>
+              <dd className="text-ink">{ciclo[campo]}</dd>
+            </div>
+          ))}
         </div>
       )}
     </Card>

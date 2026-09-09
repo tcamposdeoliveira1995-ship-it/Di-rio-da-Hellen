@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { identificadorParaEmail } from "@/lib/contaFamiliar";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -31,7 +33,7 @@ export default function LoginForm() {
 }
 
 function FormularioLogin({ destino, router }) {
-  const [email, setEmail] = useState("");
+  const [identificador, setIdentificador] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
@@ -45,9 +47,12 @@ function FormularioLogin({ destino, router }) {
     setEnviando(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: identificadorParaEmail(identificador),
+        password,
+      });
       if (error) {
-        setErro("E-mail ou senha incorretos.");
+        setErro("E-mail/telefone ou senha incorretos.");
         return;
       }
       router.push(destino);
@@ -62,14 +67,18 @@ function FormularioLogin({ destino, router }) {
   async function aoEsqueciSenha() {
     setErro("");
     setAviso("");
-    if (!email) {
-      setErro("Digite seu e-mail acima e clique em \"Esqueci minha senha\" de novo.");
+    if (!identificador) {
+      setErro("Digite seu e-mail ou telefone acima e clique em \"Esqueci minha senha\" de novo.");
+      return;
+    }
+    if (!identificador.includes("@")) {
+      setErro("Contas cadastradas com telefone precisam pedir pra Hellen redefinir a senha direto no Supabase.");
       return;
     }
     setEnviandoReset(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(identificador, {
         redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
       });
       if (error) {
@@ -85,14 +94,13 @@ function FormularioLogin({ destino, router }) {
   return (
     <form onSubmit={aoEnviar} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm text-muted mb-1">E-mail</label>
+        <label htmlFor="identificador" className="block text-sm text-muted mb-1">E-mail ou telefone</label>
         <input
-          id="email"
-          type="email"
+          id="identificador"
           required
           autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={identificador}
+          onChange={(e) => setIdentificador(e.target.value)}
           className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-burnt"
         />
       </div>
@@ -132,6 +140,11 @@ function FormularioLogin({ destino, router }) {
         {enviando && <Loader2 size={16} className="animate-spin" />}
         Entrar
       </button>
+
+      <p className="text-center text-xs text-muted">
+        É da família e ainda não tem conta?{" "}
+        <Link href="/cadastro" className="text-burnt hover:underline">Criar conta</Link>
+      </p>
     </form>
   );
 }

@@ -12,7 +12,7 @@ import { FRASES_DO_DIA, tipoAgendaPorId } from "@/lib/constants";
 const TIPOS_PROXIMOS_PASSOS = ["consulta", "exame", "tratamento"];
 
 export default function HomePage() {
-  const { tratamentoInfo, ciclos, diario, agenda, carinhos, criancas, atualizarHumorHoje } = useStore();
+  const { tratamentoInfo, ciclos, diario, agenda, carinhos, criancas, atualizarHumorHoje, souAdmin } = useStore();
 
   const carinhoNaoVisto = carinhos.find((c) => !c.visualizado);
   const autorCarinho = carinhoNaoVisto && criancas.find((c) => c.id === carinhoNaoVisto.crianca_id);
@@ -68,7 +68,7 @@ export default function HomePage() {
       <Card title="Hoje" icon="🌻">
         <p className="text-sm text-muted mb-3">{formatarDataLonga(hoje())}</p>
         <p className="text-sm text-ink mb-2">Como estou hoje?</p>
-        <MoodPicker valor={entradaHoje?.humor} onChange={atualizarHumorHoje} size="lg" />
+        <MoodPicker valor={entradaHoje?.humor} onChange={souAdmin ? atualizarHumorHoje : undefined} size="lg" />
       </Card>
 
       {proximosPassos.length > 0 && (
@@ -103,14 +103,16 @@ export default function HomePage() {
         </Card>
       )}
 
-      <Card title="Atalhos rápidos" icon="✨">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Atalho href="/diario/novo" emoji="📖" label="Registrar meu dia" />
-          <Atalho href="/tratamento?novo=1" emoji="💊" label="Registrar tratamento" />
-          <Atalho href="/sintomas?novo=1" emoji="🩺" label="Registrar sintomas" />
-          <Atalho href="/exames?novo=1" emoji="🧪" label="Adicionar exame" />
-        </div>
-      </Card>
+      {souAdmin && (
+        <Card title="Atalhos rápidos" icon="✨">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Atalho href="/diario/novo" emoji="📖" label="Registrar meu dia" />
+            <Atalho href="/tratamento?novo=1" emoji="💊" label="Registrar tratamento" />
+            <Atalho href="/sintomas?novo=1" emoji="🩺" label="Registrar sintomas" />
+            <Atalho href="/exames?novo=1" emoji="🧪" label="Adicionar exame" />
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

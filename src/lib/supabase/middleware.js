@@ -6,7 +6,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
 // resto do diário é conteúdo privado da Hellen. O Cantinho é público de
 // propósito: a Helô não tem (e não deveria precisar de) login — ele só
 // alcança as rotas de /api/cantinho/*, que nunca tocam em dados médicos.
-const PUBLIC_PATHS = ["/login", "/cantinho", "/api/cantinho"];
+const PUBLIC_PATHS = ["/login", "/cadastro", "/cantinho", "/api/cantinho"];
 
 export async function updateSession(request) {
   let response = NextResponse.next({ request });

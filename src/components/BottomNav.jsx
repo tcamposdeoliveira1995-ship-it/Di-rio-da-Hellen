@@ -6,10 +6,12 @@ import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { MOBILE_NAV_ITEMS } from "@/lib/nav";
 import RegistrarMenu from "./RegistrarMenu";
+import { useStore } from "@/lib/store";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const [menuAberto, setMenuAberto] = useState(false);
+  const { souAdmin } = useStore();
 
   const [antes, depois] = [
     MOBILE_NAV_ITEMS.slice(0, 2),
@@ -26,14 +28,16 @@ export default function BottomNav() {
           ))}
 
           <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => setMenuAberto(true)}
-              aria-label="Registrar"
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-burnt text-white shadow-md -translate-y-3"
-            >
-              <Plus size={22} />
-            </button>
+            {souAdmin && (
+              <button
+                type="button"
+                onClick={() => setMenuAberto(true)}
+                aria-label="Registrar"
+                className="flex items-center justify-center w-12 h-12 rounded-full bg-burnt text-white shadow-md -translate-y-3"
+              >
+                <Plus size={22} />
+              </button>
+            )}
           </div>
 
           {depois.map((item) => (

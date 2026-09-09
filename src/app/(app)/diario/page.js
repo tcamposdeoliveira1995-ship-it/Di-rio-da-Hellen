@@ -10,7 +10,7 @@ import { formatarDataLonga } from "@/lib/date";
 import { humorPorId } from "@/lib/constants";
 
 export default function DiarioPage() {
-  const { diario } = useStore();
+  const { diario, souAdmin } = useStore();
 
   return (
     <div className="space-y-6">
@@ -19,12 +19,14 @@ export default function DiarioPage() {
           <h1 className="font-display text-2xl text-ink">Meu Diário 📖</h1>
           <p className="text-sm text-muted">Cada dia é um capítulo da sua história.</p>
         </div>
-        <Link
-          href="/diario/novo"
-          className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
-        >
-          <Plus size={16} /> Registrar meu dia
-        </Link>
+        {souAdmin && (
+          <Link
+            href="/diario/novo"
+            className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
+          >
+            <Plus size={16} /> Registrar meu dia
+          </Link>
+        )}
       </header>
 
       {diario.length === 0 ? (
@@ -45,12 +47,14 @@ export default function DiarioPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-medium text-ink">{formatarDataLonga(entrada.data)}</p>
-                      <Link
-                        href={`/diario/novo?data=${entrada.data}`}
-                        className="text-xs text-burnt hover:underline whitespace-nowrap"
-                      >
-                        Editar
-                      </Link>
+                      {souAdmin && (
+                        <Link
+                          href={`/diario/novo?data=${entrada.data}`}
+                          className="text-xs text-burnt hover:underline whitespace-nowrap"
+                        >
+                          Editar
+                        </Link>
+                      )}
                     </div>
                     {entrada.energia && (
                       <p className="text-xs text-muted mt-0.5">Energia: {entrada.energia}/5</p>

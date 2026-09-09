@@ -27,6 +27,7 @@ const ESTADO_VAZIO = {
   contatosApoio: [],
   criancas: [],
   carinhos: [],
+  perfis: [],
 };
 
 export function StoreProvider({ children }) {
@@ -40,29 +41,47 @@ export function StoreProvider({ children }) {
     setCarregando(true);
     setErro("");
     try {
+      // Sem .eq("user_id", uid) de propósito: quem está logado pode não
+      // ser a dona dos dados (um familiar aprovado como visualizador
+      // olha os dados DA HELLEN, não os próprios — que nem existem).
+      // Quem decide o que cada um vê é o RLS lá no banco
+      // (pode_visualizar()/is_admin(), ver supabase/schema.sql), não um
+      // filtro daqui. "perfis" é a exceção: sempre filtramos pelo
+      // próprio uid primeiro pra saber se essa conta já foi aprovada,
+      // antes de tentar carregar o resto.
+      const meuPerfil = await supabase.from("perfis").select("*").eq("id", uid).maybeSingle();
+      if (meuPerfil.error) throw meuPerfil.error;
+
+      const souAprovada = meuPerfil.data?.papel === "admin" || meuPerfil.data?.papel === "visualizador";
+      if (!souAprovada) {
+        setDados({ ...ESTADO_VAZIO, perfis: meuPerfil.data ? [meuPerfil.data] : [] });
+        return;
+      }
+
       const [
         tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
-        duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos,
+        duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos, perfis,
       ] = await Promise.all([
-        supabase.from("tratamento_info").select("*").eq("user_id", uid).maybeSingle(),
-        supabase.from("ciclos").select("*").eq("user_id", uid).order("numero"),
-        supabase.from("diario").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        supabase.from("sintomas").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        supabase.from("exames").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        supabase.from("agenda").select("*").eq("user_id", uid).order("data"),
-        supabase.from("eventos_jornada").select("*").eq("user_id", uid).order("data"),
-        supabase.from("duvidas").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        supabase.from("documentos").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        supabase.from("memorias").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        supabase.from("mural").select("*").eq("user_id", uid).order("data", { ascending: false }),
-        supabase.from("contatos_apoio").select("*").eq("user_id", uid).order("nome"),
-        supabase.from("criancas").select("*").eq("user_id", uid).order("nome"),
-        supabase.from("carinhos").select("*").eq("destinatario_user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("tratamento_info").select("*").maybeSingle(),
+        supabase.from("ciclos").select("*").order("numero"),
+        supabase.from("diario").select("*").order("data", { ascending: false }),
+        supabase.from("sintomas").select("*").order("data", { ascending: false }),
+        supabase.from("exames").select("*").order("data", { ascending: false }),
+        supabase.from("agenda").select("*").order("data"),
+        supabase.from("eventos_jornada").select("*").order("data"),
+        supabase.from("duvidas").select("*").order("data", { ascending: false }),
+        supabase.from("documentos").select("*").order("data", { ascending: false }),
+        supabase.from("memorias").select("*").order("data", { ascending: false }),
+        supabase.from("mural").select("*").order("data", { ascending: false }),
+        supabase.from("contatos_apoio").select("*").order("nome"),
+        supabase.from("criancas").select("*").order("nome"),
+        supabase.from("carinhos").select("*").order("created_at", { ascending: false }),
+        supabase.from("perfis").select("*").order("created_at"),
       ]);
 
       const primeiroErro = [
         tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
-        duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos,
+        duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos, perfis,
       ].map((r) => r.error).find(Boolean);
       if (primeiroErro) throw primeiroErro;
 
@@ -81,6 +100,7 @@ export function StoreProvider({ children }) {
         contatosApoio: contatosApoio.data || [],
         criancas: criancas.data || [],
         carinhos: carinhos.data || [],
+        perfis: perfis.data || [],
       });
     } catch (err) {
       console.error("Erro ao carregar os dados do Supabase:", err);
@@ -336,12 +356,37 @@ export function StoreProvider({ children }) {
         );
         setDados((d) => ({ ...d, carinhos: d.carinhos.map((c) => (c.id === id ? data : c)) }));
       },
+
+      // Admin aprova (ou reprova/revoga) alguém — só quem já é admin
+      // consegue de fato gravar isso, o RLS que garante (ver
+      // "perfis_update" no schema.sql).
+      async definirPapel(id, papel) {
+        const data = await tratarErro(
+          supabase.from("perfis").update({ papel }).eq("id", id).select().single(),
+          "Não foi possível atualizar essa pessoa."
+        );
+        setDados((d) => ({ ...d, perfis: d.perfis.map((p) => (p.id === id ? data : p)) }));
+      },
     };
   }, [supabase, userId, dados]);
 
+  const meuPerfil = useMemo(() => dados.perfis.find((p) => p.id === userId) || null, [dados.perfis, userId]);
+  const souAdmin = meuPerfil?.papel === "admin";
+  const souPendente = userId != null && meuPerfil?.papel !== "admin" && meuPerfil?.papel !== "visualizador";
+
   const valor = useMemo(
-    () => ({ ...dados, ...acoes, carregando, erro, userId, recarregar: () => userId && carregarTudo(userId) }),
-    [dados, acoes, carregando, erro, userId, carregarTudo]
+    () => ({
+      ...dados,
+      ...acoes,
+      carregando,
+      erro,
+      userId,
+      meuPerfil,
+      souAdmin,
+      souPendente,
+      recarregar: () => userId && carregarTudo(userId),
+    }),
+    [dados, acoes, carregando, erro, userId, meuPerfil, souAdmin, souPendente, carregarTudo]
   );
 
   return <StoreContext.Provider value={valor}>{children}</StoreContext.Provider>;

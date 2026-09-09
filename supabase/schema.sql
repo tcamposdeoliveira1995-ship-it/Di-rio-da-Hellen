@@ -229,7 +229,100 @@ create table if not exists public.carinhos (
 );
 
 -- ---------------------------------------------------------------------
--- Row Level Security — cada usuário só acessa as próprias linhas.
+-- Acesso familiar — vários usuários de verdade (nome + telefone + senha,
+-- por baixo dos panos um e-mail sintético gerado a partir do telefone).
+-- Todo mundo que se cadastra vira "pendente" até a Hellen aprovar; só
+-- ela é "admin" (edita tudo); quem for aprovado como "visualizador" vê
+-- tudo, mas não edita nada. A Helô não entra aqui — ela usa o Cantinho,
+-- que nem precisa de login.
+-- ---------------------------------------------------------------------
+create table if not exists public.perfis (
+  id uuid primary key references auth.users (id) on delete cascade,
+  nome text not null default '',
+  telefone text,
+  papel text not null default 'pendente', -- admin | visualizador | pendente
+  created_at timestamptz not null default now()
+);
+
+alter table public.perfis enable row level security;
+
+-- security definer: consulta "perfis" ignorando o próprio RLS da
+-- tabela, pra evitar recursão infinita (uma policy de "perfis" que
+-- precisasse consultar "perfis" de novo pra saber se auth.uid() é
+-- admin, entraria em loop).
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from public.perfis where id = auth.uid() and papel = 'admin'
+  );
+$$;
+
+create or replace function public.pode_visualizar()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from public.perfis where id = auth.uid() and papel in ('admin', 'visualizador')
+  );
+$$;
+
+drop policy if exists "perfis_select" on public.perfis;
+create policy "perfis_select" on public.perfis for select
+  using (auth.uid() = id or public.is_admin());
+
+drop policy if exists "perfis_update" on public.perfis;
+create policy "perfis_update" on public.perfis for update
+  using (public.is_admin());
+
+-- Cria o perfil (sempre "pendente") assim que alguém se cadastra —
+-- roda com privilégio de dono da função, então funciona mesmo antes da
+-- sessão da pessoa existir de verdade.
+create or replace function public.criar_perfil_novo_usuario()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.perfis (id, nome, telefone, papel)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'nome', ''),
+    new.raw_user_meta_data->>'telefone',
+    'pendente'
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.criar_perfil_novo_usuario();
+
+-- Backfill: quem já tinha conta antes desse schema existir (ou seja, só
+-- a Hellen, já que até aqui era um app de usuário único) vira admin
+-- automaticamente. Rodar de novo não faz nada de diferente — só quem
+-- ainda não tem perfil ganha um, e só o primeiro rodar encontra alguém
+-- nessa situação.
+insert into public.perfis (id, nome, papel)
+select id, coalesce(raw_user_meta_data->>'nome', 'Hellen'), 'admin'
+from auth.users
+on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------
+-- Row Level Security — a Hellen (admin) edita tudo; quem for aprovado
+-- como visualizador vê tudo, mas não grava nada; "pendente" não vê
+-- nada.
 -- ---------------------------------------------------------------------
 alter table public.tratamento_info enable row level security;
 alter table public.ciclos enable row level security;
@@ -260,40 +353,47 @@ begin
     execute format('drop policy if exists "dono_insert" on public.%I', tabela);
     execute format('drop policy if exists "dono_update" on public.%I', tabela);
     execute format('drop policy if exists "dono_delete" on public.%I', tabela);
+    execute format('drop policy if exists "familia_select" on public.%I', tabela);
+    execute format('drop policy if exists "admin_insert" on public.%I', tabela);
+    execute format('drop policy if exists "admin_update" on public.%I', tabela);
+    execute format('drop policy if exists "admin_delete" on public.%I', tabela);
 
     execute format(
-      'create policy "dono_select" on public.%I for select using (auth.uid() = user_id)',
+      'create policy "familia_select" on public.%I for select using (public.pode_visualizar())',
       tabela
     );
     execute format(
-      'create policy "dono_insert" on public.%I for insert with check (auth.uid() = user_id)',
+      'create policy "admin_insert" on public.%I for insert with check (public.is_admin())',
       tabela
     );
     execute format(
-      'create policy "dono_update" on public.%I for update using (auth.uid() = user_id)',
+      'create policy "admin_update" on public.%I for update using (public.is_admin())',
       tabela
     );
     execute format(
-      'create policy "dono_delete" on public.%I for delete using (auth.uid() = user_id)',
+      'create policy "admin_delete" on public.%I for delete using (public.is_admin())',
       tabela
     );
   end loop;
 end $$;
 
--- "carinhos" usa destinatario_user_id (não user_id) e não tem policy de
--- insert — só a Hellen lê/atualiza (reação, favorito, visualizado); quem
--- grava um carinho novo é a rota do servidor, com a service role key,
--- que ignora RLS.
+-- "carinhos" segue o mesmo padrão (quem vê é quem pode visualizar,
+-- quem edita — reagir, favoritar, apagar — é só admin). Continua sem
+-- policy de insert: quem grava um carinho novo é a rota do servidor,
+-- com a service role key, que ignora RLS.
 drop policy if exists "dono_select" on public.carinhos;
 drop policy if exists "dono_update" on public.carinhos;
 drop policy if exists "dono_delete" on public.carinhos;
+drop policy if exists "familia_select" on public.carinhos;
+drop policy if exists "admin_update" on public.carinhos;
+drop policy if exists "admin_delete" on public.carinhos;
 
-create policy "dono_select" on public.carinhos for select
-  using (auth.uid() = destinatario_user_id);
-create policy "dono_update" on public.carinhos for update
-  using (auth.uid() = destinatario_user_id);
-create policy "dono_delete" on public.carinhos for delete
-  using (auth.uid() = destinatario_user_id);
+create policy "familia_select" on public.carinhos for select
+  using (public.pode_visualizar());
+create policy "admin_update" on public.carinhos for update
+  using (public.is_admin());
+create policy "admin_delete" on public.carinhos for delete
+  using (public.is_admin());
 
 -- ---------------------------------------------------------------------
 -- Storage — fotos do diário e arquivos de exames, em bucket privado.
@@ -306,13 +406,15 @@ drop policy if exists "hellen_arquivos_select" on storage.objects;
 drop policy if exists "hellen_arquivos_insert" on storage.objects;
 drop policy if exists "hellen_arquivos_delete" on storage.objects;
 
--- Os arquivos são guardados em caminhos "<user_id>/...", então cada
--- usuário só acessa a própria pasta dentro do bucket.
+-- Os arquivos são guardados em caminhos "<user_id>/...". Ver é pra
+-- quem pode visualizar (admin ou visualizador aprovado); gravar/apagar
+-- é só admin. (A pasta em si continua sendo sempre a da Hellen — é o
+-- único "dono" de dados que existe — o caminho não muda.)
 create policy "hellen_arquivos_select" on storage.objects for select
-  using (bucket_id = 'hellen-arquivos' and (storage.foldername(name))[1] = auth.uid()::text);
+  using (bucket_id = 'hellen-arquivos' and public.pode_visualizar());
 
 create policy "hellen_arquivos_insert" on storage.objects for insert
-  with check (bucket_id = 'hellen-arquivos' and (storage.foldername(name))[1] = auth.uid()::text);
+  with check (bucket_id = 'hellen-arquivos' and public.is_admin());
 
 create policy "hellen_arquivos_delete" on storage.objects for delete
-  using (bucket_id = 'hellen-arquivos' and (storage.foldername(name))[1] = auth.uid()::text);
+  using (bucket_id = 'hellen-arquivos' and public.is_admin());

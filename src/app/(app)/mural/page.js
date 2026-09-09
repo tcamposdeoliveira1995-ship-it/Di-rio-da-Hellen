@@ -10,7 +10,7 @@ import { useStore } from "@/lib/store";
 import { hoje, formatarDataLonga } from "@/lib/date";
 
 export default function MuralPage() {
-  const { mural, adicionarMural } = useStore();
+  const { mural, adicionarMural, souAdmin } = useStore();
   const [formAberto, setFormAberto] = useState(false);
 
   return (
@@ -20,7 +20,7 @@ export default function MuralPage() {
           <h1 className="font-display text-2xl text-ink">Mural da Hellen 💌</h1>
           <p className="text-sm text-muted">Mensagens de quem está na sua torcida.</p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -30,7 +30,7 @@ export default function MuralPage() {
         )}
       </header>
 
-      {formAberto && (
+      {souAdmin && formAberto && (
         <FormularioMural onFechar={() => setFormAberto(false)} onSalvar={adicionarMural} />
       )}
 

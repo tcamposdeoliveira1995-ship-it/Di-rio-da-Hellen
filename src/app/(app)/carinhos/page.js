@@ -12,7 +12,8 @@ import { formatarDataLonga } from "@/lib/date";
 const AVATARES = ["🌸", "🦋", "⭐", "😊", "💗", "🌈", "🐱", "🐶"];
 
 export default function CarinhosPage() {
-  const { criancas, carinhos, adicionarCrianca, atualizarCrianca, reagirCarinho, favoritarCarinho } = useStore();
+  const { criancas, carinhos, adicionarCrianca, atualizarCrianca, reagirCarinho, favoritarCarinho, souAdmin } =
+    useStore();
   const [filtro, setFiltro] = useState("todos");
   const [gerenciarAberto, setGerenciarAberto] = useState(criancas.length === 0);
   const [formAberto, setFormAberto] = useState(false);
@@ -57,34 +58,35 @@ export default function CarinhosPage() {
                 <Toggle
                   label="Ativo"
                   valor={c.ativo}
-                  onChange={(v) => atualizarCrianca(c.id, { ativo: v })}
+                  onChange={souAdmin ? (v) => atualizarCrianca(c.id, { ativo: v }) : undefined}
                 />
                 <Toggle
                   label="Desenhar"
                   valor={c.pode_desenhar}
-                  onChange={(v) => atualizarCrianca(c.id, { pode_desenhar: v })}
+                  onChange={souAdmin ? (v) => atualizarCrianca(c.id, { pode_desenhar: v }) : undefined}
                 />
                 <Toggle
                   label="Recado"
                   valor={c.pode_enviar_recado}
-                  onChange={(v) => atualizarCrianca(c.id, { pode_enviar_recado: v })}
+                  onChange={souAdmin ? (v) => atualizarCrianca(c.id, { pode_enviar_recado: v }) : undefined}
                 />
               </div>
             ))}
 
-            {formAberto ? (
-              <FormularioCrianca
-                onFechar={() => setFormAberto(false)}
-                onSalvar={adicionarCrianca}
-              />
-            ) : (
-              <button
-                onClick={() => setFormAberto(true)}
-                className="flex items-center gap-1.5 text-sm text-burnt"
-              >
-                <Plus size={16} /> Adicionar pessoa
-              </button>
-            )}
+            {souAdmin &&
+              (formAberto ? (
+                <FormularioCrianca
+                  onFechar={() => setFormAberto(false)}
+                  onSalvar={adicionarCrianca}
+                />
+              ) : (
+                <button
+                  onClick={() => setFormAberto(true)}
+                  className="flex items-center gap-1.5 text-sm text-burnt"
+                >
+                  <Plus size={16} /> Adicionar pessoa
+                </button>
+              ))}
           </div>
         )}
       </Card>
@@ -110,6 +112,7 @@ export default function CarinhosPage() {
                 autor={autor}
                 onReagir={reagirCarinho}
                 onFavoritar={favoritarCarinho}
+                souAdmin={souAdmin}
               />
             );
           })}
@@ -122,8 +125,9 @@ export default function CarinhosPage() {
 function Toggle({ label, valor, onChange }) {
   return (
     <button
-      onClick={() => onChange(!valor)}
-      className={`text-[11px] rounded-full px-2 py-1 whitespace-nowrap ${
+      disabled={!onChange}
+      onClick={onChange ? () => onChange(!valor) : undefined}
+      className={`text-[11px] rounded-full px-2 py-1 whitespace-nowrap disabled:opacity-70 ${
         valor ? "bg-burnt text-white" : "bg-surface text-muted border border-line"
       }`}
     >
@@ -202,7 +206,7 @@ function FormularioCrianca({ onFechar, onSalvar }) {
   );
 }
 
-function CarinhoCard({ carinho, autor, onReagir, onFavoritar }) {
+function CarinhoCard({ carinho, autor, onReagir, onFavoritar, souAdmin }) {
   const [url, setUrl] = useState(null);
 
   useEffect(() => {
@@ -229,22 +233,39 @@ function CarinhoCard({ carinho, autor, onReagir, onFavoritar }) {
       </p>
 
       <div className="flex items-center gap-2 mt-3">
-        <button
-          onClick={() => onReagir(carinho.id, carinho.reacao === "amei" ? null : "amei")}
-          className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${
-            carinho.reacao === "amei" ? "bg-burnt text-white" : "bg-cream text-ink"
-          }`}
-        >
-          <Heart size={14} /> Amei
-        </button>
-        <button
-          onClick={() => onFavoritar(carinho.id, !carinho.favorito)}
-          className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${
-            carinho.favorito ? "bg-gold text-white" : "bg-cream text-ink"
-          }`}
-        >
-          <Star size={14} /> Favorito
-        </button>
+        {souAdmin ? (
+          <>
+            <button
+              onClick={() => onReagir(carinho.id, carinho.reacao === "amei" ? null : "amei")}
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${
+                carinho.reacao === "amei" ? "bg-burnt text-white" : "bg-cream text-ink"
+              }`}
+            >
+              <Heart size={14} /> Amei
+            </button>
+            <button
+              onClick={() => onFavoritar(carinho.id, !carinho.favorito)}
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs ${
+                carinho.favorito ? "bg-gold text-white" : "bg-cream text-ink"
+              }`}
+            >
+              <Star size={14} /> Favorito
+            </button>
+          </>
+        ) : (
+          <>
+            {carinho.reacao === "amei" && (
+              <span className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs bg-burnt text-white">
+                <Heart size={14} /> Amei
+              </span>
+            )}
+            {carinho.favorito && (
+              <span className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs bg-gold text-white">
+                <Star size={14} /> Favorito
+              </span>
+            )}
+          </>
+        )}
         {url && (
           <a
             href={url}

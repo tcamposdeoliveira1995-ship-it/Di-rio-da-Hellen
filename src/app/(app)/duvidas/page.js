@@ -9,7 +9,7 @@ import { hoje, formatarDataLonga } from "@/lib/date";
 import { STATUS_DUVIDA, statusDuvidaPorId } from "@/lib/constants";
 
 export default function DuvidasPage() {
-  const { duvidas, adicionarDuvida, atualizarDuvida } = useStore();
+  const { duvidas, adicionarDuvida, atualizarDuvida, souAdmin } = useStore();
   const [formAberto, setFormAberto] = useState(false);
 
   const abertas = duvidas.filter((d) => d.status !== "respondida");
@@ -22,7 +22,7 @@ export default function DuvidasPage() {
           <h1 className="font-display text-2xl text-ink">Minhas Dúvidas ❓</h1>
           <p className="text-sm text-muted">Anote o que quiser perguntar na próxima consulta.</p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -32,7 +32,7 @@ export default function DuvidasPage() {
         )}
       </header>
 
-      {formAberto && (
+      {souAdmin && formAberto && (
         <FormularioDuvida onFechar={() => setFormAberto(false)} onSalvar={adicionarDuvida} />
       )}
 
@@ -45,14 +45,14 @@ export default function DuvidasPage() {
           {abertas.length > 0 && (
             <Secao titulo="Quero perguntar">
               {abertas.map((d) => (
-                <DuvidaCard key={d.id} duvida={d} onAtualizar={atualizarDuvida} />
+                <DuvidaCard key={d.id} duvida={d} onAtualizar={atualizarDuvida} souAdmin={souAdmin} />
               ))}
             </Secao>
           )}
           {respondidas.length > 0 && (
             <Secao titulo="Respondidas">
               {respondidas.map((d) => (
-                <DuvidaCard key={d.id} duvida={d} onAtualizar={atualizarDuvida} />
+                <DuvidaCard key={d.id} duvida={d} onAtualizar={atualizarDuvida} souAdmin={souAdmin} />
               ))}
             </Secao>
           )}
@@ -71,7 +71,7 @@ function Secao({ titulo, children }) {
   );
 }
 
-function DuvidaCard({ duvida, onAtualizar }) {
+function DuvidaCard({ duvida, onAtualizar, souAdmin }) {
   const [editando, setEditando] = useState(false);
   const [resposta, setResposta] = useState(duvida.resposta || "");
   const [salvando, setSalvando] = useState(false);
@@ -103,7 +103,7 @@ function DuvidaCard({ duvida, onAtualizar }) {
         <p className="text-sm text-ink mt-3 bg-cream rounded-xl px-3 py-2">{duvida.resposta}</p>
       )}
 
-      {(duvida.status !== "respondida" || editando) && (
+      {souAdmin && (duvida.status !== "respondida" || editando) && (
         <div className="mt-3 space-y-2">
           <textarea
             rows={2}
@@ -123,7 +123,7 @@ function DuvidaCard({ duvida, onAtualizar }) {
         </div>
       )}
 
-      {duvida.status === "respondida" && !editando && (
+      {souAdmin && duvida.status === "respondida" && !editando && (
         <button onClick={() => setEditando(true)} className="text-xs text-burnt mt-2 hover:underline">
           Editar resposta
         </button>

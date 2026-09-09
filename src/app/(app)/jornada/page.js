@@ -9,7 +9,7 @@ import { hoje, formatarDataLonga, diaDaJornada } from "@/lib/date";
 import { CATEGORIAS_JORNADA, categoriaJornadaPorId } from "@/lib/constants";
 
 export default function JornadaPage() {
-  const { tratamentoInfo, eventosJornada, adicionarEventoJornada } = useStore();
+  const { tratamentoInfo, eventosJornada, adicionarEventoJornada, souAdmin } = useStore();
   const [formAberto, setFormAberto] = useState(false);
 
   const dataInicioJornada = tratamentoInfo?.jornada_data_inicio || tratamentoInfo?.data_inicio;
@@ -23,7 +23,7 @@ export default function JornadaPage() {
             {dataInicioJornada ? `Dia ${diaDaJornada(dataInicioJornada)} da caminhada.` : "Sua caminhada, um passo por vez."}
           </p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -33,7 +33,7 @@ export default function JornadaPage() {
         )}
       </header>
 
-      {formAberto && (
+      {souAdmin && formAberto && (
         <FormularioEvento onFechar={() => setFormAberto(false)} onSalvar={adicionarEventoJornada} />
       )}
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
+import { useStore } from "@/lib/store";
 
 // Todas as telas do app, num painel deslizante — o menu inferior do
 // celular só tem espaço pra 4 atalhos fixos + o botão de registro
@@ -12,6 +13,8 @@ import { NAV_ITEMS } from "@/lib/nav";
 // aqui no mobile.
 export default function MobileMenu({ aberto, onFechar }) {
   const pathname = usePathname();
+  const { souAdmin } = useStore();
+  const itens = NAV_ITEMS.filter((item) => !item.somenteAdmin || souAdmin);
 
   if (!aberto) return null;
 
@@ -30,7 +33,7 @@ export default function MobileMenu({ aberto, onFechar }) {
         </div>
 
         <nav className="flex-1 overflow-y-auto flex flex-col gap-1 px-3 py-3">
-          {NAV_ITEMS.map((item) => {
+          {itens.map((item) => {
             const ativo = pathname === item.href;
             return (
               <Link

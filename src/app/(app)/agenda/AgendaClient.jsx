@@ -17,8 +17,8 @@ function amanha() {
 
 export default function AgendaClient() {
   const searchParams = useSearchParams();
-  const { agenda, adicionarAgenda, removerAgenda } = useStore();
-  const [formAberto, setFormAberto] = useState(searchParams.get("novo") === "1");
+  const { agenda, adicionarAgenda, removerAgenda, souAdmin } = useStore();
+  const [formAberto, setFormAberto] = useState(souAdmin && searchParams.get("novo") === "1");
   const [referencia, setReferencia] = useState(() => {
     const [ano, mes] = hoje().split("-");
     return { ano: Number(ano), mes: Number(mes) - 1 };
@@ -60,7 +60,7 @@ export default function AgendaClient() {
           <h1 className="font-display text-2xl text-ink">Agenda 📅</h1>
           <p className="text-sm text-muted">Consultas, exames e compromissos, tudo num só lugar.</p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -84,7 +84,7 @@ export default function AgendaClient() {
         </Card>
       )}
 
-      {formAberto && (
+      {souAdmin && formAberto && (
         <FormularioAgenda onFechar={() => setFormAberto(false)} onSalvar={adicionarAgenda} />
       )}
 
@@ -156,13 +156,15 @@ export default function AgendaClient() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => removerAgenda(e.id)}
-                    aria-label="Remover"
-                    className="text-muted hover:text-burnt"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {souAdmin && (
+                    <button
+                      onClick={() => removerAgenda(e.id)}
+                      aria-label="Remover"
+                      className="text-muted hover:text-burnt"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </Card>
               );
             })}

@@ -5,10 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
+import { useStore } from "@/lib/store";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { souAdmin } = useStore();
+  const itens = NAV_ITEMS.filter((item) => !item.somenteAdmin || souAdmin);
 
   async function sair() {
     const supabase = createClient();
@@ -28,7 +31,7 @@ export default function Sidebar() {
           rolar por conta própria — sem ele, com muitos itens de menu, a
           lista simplesmente vaza pra fora da tela em telas mais baixas. */}
       <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 pr-1">
-        {NAV_ITEMS.map((item) => {
+        {itens.map((item) => {
           const ativo = pathname === item.href;
           return (
             <Link

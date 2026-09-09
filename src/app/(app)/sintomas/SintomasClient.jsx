@@ -16,8 +16,8 @@ function agora() {
 
 export default function SintomasClient() {
   const searchParams = useSearchParams();
-  const { sintomas, adicionarSintoma } = useStore();
-  const [formAberto, setFormAberto] = useState(searchParams.get("novo") === "1");
+  const { sintomas, adicionarSintoma, souAdmin } = useStore();
+  const [formAberto, setFormAberto] = useState(souAdmin && searchParams.get("novo") === "1");
 
   return (
     <div className="space-y-6">
@@ -26,7 +26,7 @@ export default function SintomasClient() {
           <h1 className="font-display text-2xl text-ink">Sintomas 🩺</h1>
           <p className="text-sm text-muted">Registre como o corpo está reagindo, dia a dia.</p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -43,7 +43,7 @@ export default function SintomasClient() {
         </p>
       </Card>
 
-      {formAberto && <FormularioSintoma onFechar={() => setFormAberto(false)} onSalvar={adicionarSintoma} />}
+      {souAdmin && formAberto && <FormularioSintoma onFechar={() => setFormAberto(false)} onSalvar={adicionarSintoma} />}
 
       {sintomas.length === 0 ? (
         <Card>

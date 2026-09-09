@@ -11,7 +11,7 @@ import { hoje, formatarDataLonga } from "@/lib/date";
 import { CATEGORIAS_DOCUMENTO } from "@/lib/constants";
 
 export default function DocumentosPage() {
-  const { documentos, adicionarDocumento } = useStore();
+  const { documentos, adicionarDocumento, souAdmin } = useStore();
   const [formAberto, setFormAberto] = useState(false);
   const [filtro, setFiltro] = useState("todos");
 
@@ -24,7 +24,7 @@ export default function DocumentosPage() {
           <h1 className="font-display text-2xl text-ink">Documentos 📂</h1>
           <p className="text-sm text-muted">Pasta digital pra tudo que não é exame.</p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -34,7 +34,7 @@ export default function DocumentosPage() {
         )}
       </header>
 
-      {formAberto && (
+      {souAdmin && formAberto && (
         <FormularioDocumento onFechar={() => setFormAberto(false)} onSalvar={adicionarDocumento} />
       )}
 

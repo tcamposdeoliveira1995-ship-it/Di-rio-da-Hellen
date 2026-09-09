@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store";
 import { CATEGORIAS_CONTATO, TIPOS_CONTATO_UTIL } from "@/lib/constants";
 
 export default function RedeApoioPage() {
-  const { contatosApoio, adicionarContato, removerContato } = useStore();
+  const { contatosApoio, adicionarContato, removerContato, souAdmin } = useStore();
   const [formAberto, setFormAberto] = useState(false);
 
   return (
@@ -18,7 +18,7 @@ export default function RedeApoioPage() {
           <h1 className="font-display text-2xl text-ink">Minha Rede de Apoio 🤍</h1>
           <p className="text-sm text-muted">As pessoas e contatos importantes da sua jornada.</p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -28,7 +28,7 @@ export default function RedeApoioPage() {
         )}
       </header>
 
-      {formAberto && (
+      {souAdmin && formAberto && (
         <FormularioContato onFechar={() => setFormAberto(false)} onSalvar={adicionarContato} />
       )}
 
@@ -46,7 +46,7 @@ export default function RedeApoioPage() {
             ) : (
               <div className="grid sm:grid-cols-2 gap-3">
                 {contatos.map((c) => (
-                  <ContatoCard key={c.id} contato={c} onRemover={removerContato} />
+                  <ContatoCard key={c.id} contato={c} onRemover={removerContato} souAdmin={souAdmin} />
                 ))}
               </div>
             )}
@@ -57,7 +57,7 @@ export default function RedeApoioPage() {
   );
 }
 
-function ContatoCard({ contato, onRemover }) {
+function ContatoCard({ contato, onRemover, souAdmin }) {
   const tipoUtil = TIPOS_CONTATO_UTIL.find((t) => t.id === contato.tipo_util);
   return (
     <Card className="!p-4 flex items-start justify-between gap-3">
@@ -73,9 +73,11 @@ function ContatoCard({ contato, onRemover }) {
           </p>
         )}
       </div>
-      <button onClick={() => onRemover(contato.id)} aria-label="Remover" className="text-muted hover:text-burnt">
-        <Trash2 size={16} />
-      </button>
+      {souAdmin && (
+        <button onClick={() => onRemover(contato.id)} aria-label="Remover" className="text-muted hover:text-burnt">
+          <Trash2 size={16} />
+        </button>
+      )}
     </Card>
   );
 }

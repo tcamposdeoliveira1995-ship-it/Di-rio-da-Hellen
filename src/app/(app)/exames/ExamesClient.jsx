@@ -13,8 +13,8 @@ import { CATEGORIAS_EXAME } from "@/lib/constants";
 
 export default function ExamesClient() {
   const searchParams = useSearchParams();
-  const { exames, adicionarExame } = useStore();
-  const [formAberto, setFormAberto] = useState(searchParams.get("novo") === "1");
+  const { exames, adicionarExame, souAdmin } = useStore();
+  const [formAberto, setFormAberto] = useState(souAdmin && searchParams.get("novo") === "1");
   const [filtro, setFiltro] = useState("todos");
 
   const listados = filtro === "todos" ? exames : exames.filter((e) => e.tipo === filtro);
@@ -26,7 +26,7 @@ export default function ExamesClient() {
           <h1 className="font-display text-2xl text-ink">Exames 🧪</h1>
           <p className="text-sm text-muted">Biblioteca organizada dos seus exames.</p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -36,7 +36,7 @@ export default function ExamesClient() {
         )}
       </header>
 
-      {formAberto && <FormularioExame onFechar={() => setFormAberto(false)} onSalvar={adicionarExame} />}
+      {souAdmin && formAberto && <FormularioExame onFechar={() => setFormAberto(false)} onSalvar={adicionarExame} />}
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         <BotaoFiltro ativo={filtro === "todos"} onClick={() => setFiltro("todos")} label="Todos" />

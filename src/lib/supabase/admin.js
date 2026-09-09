@@ -21,14 +21,20 @@ export function createAdminClient() {
   });
 }
 
-// Hoje só existe um usuário de verdade no sistema (a Hellen) — então
-// "quem recebe os carinhos" é sempre essa única conta. Quando o acesso
-// familiar multiusuário existir (Etapa 4), isso precisa virar uma
-// escolha real em vez de "o único usuário que existe".
+// Quem recebe os carinhos é sempre a admin (a Hellen) — mesmo agora que
+// existem vários usuários de verdade (ela + família aprovada como
+// visualizadores), só tem uma "admin" no sistema. Busca direto na
+// tabela de perfis (com a chave secreta, ignora RLS) em vez de supor
+// "o primeiro usuário criado", que quebraria assim que mais gente se
+// cadastrasse.
 export async function buscarUserIdDaHellen(admin) {
-  const { data, error } = await admin.auth.admin.listUsers();
+  const { data, error } = await admin
+    .from("perfis")
+    .select("id")
+    .eq("papel", "admin")
+    .limit(1)
+    .maybeSingle();
   if (error) throw error;
-  const usuario = data.users[0];
-  if (!usuario) throw new Error("Nenhum usuário encontrado.");
-  return usuario.id;
+  if (!data) throw new Error("Nenhuma admin encontrada.");
+  return data.id;
 }

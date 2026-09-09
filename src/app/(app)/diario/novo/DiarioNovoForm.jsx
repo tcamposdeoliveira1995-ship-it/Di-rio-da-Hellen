@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Card from "@/components/Card";
+import EmptyState from "@/components/EmptyState";
 import MoodPicker from "@/components/MoodPicker";
 import CampoArquivo from "@/components/CampoArquivo";
 import { useStore } from "@/lib/store";
@@ -14,7 +15,7 @@ export default function DiarioNovoForm() {
   const searchParams = useSearchParams();
   const data = searchParams.get("data") || hoje();
 
-  const { diario, salvarDiario } = useStore();
+  const { diario, salvarDiario, souAdmin } = useStore();
   const entradaExistente = diario.find((e) => e.data === data);
 
   const [humor, setHumor] = useState(entradaExistente?.humor || null);
@@ -26,6 +27,14 @@ export default function DiarioNovoForm() {
   const [foto, setFoto] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
+
+  if (!souAdmin) {
+    return (
+      <Card>
+        <EmptyState emoji="🔒" titulo="Só a Hellen registra o diário" descricao="Você pode ver tudo, mas não editar." />
+      </Card>
+    );
+  }
 
   async function aoSalvar(e) {
     e.preventDefault();

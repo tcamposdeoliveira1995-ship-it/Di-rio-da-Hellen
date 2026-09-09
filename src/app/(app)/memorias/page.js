@@ -10,7 +10,7 @@ import { useStore } from "@/lib/store";
 import { hoje, formatarDataLonga } from "@/lib/date";
 
 export default function MemoriasPage() {
-  const { memorias, adicionarMemoria } = useStore();
+  const { memorias, adicionarMemoria, souAdmin } = useStore();
   const [formAberto, setFormAberto] = useState(false);
 
   return (
@@ -22,7 +22,7 @@ export default function MemoriasPage() {
             Nem tudo precisa ser sobre tratamento — os passeios, as risadas, os dias bons.
           </p>
         </div>
-        {!formAberto && (
+        {souAdmin && !formAberto && (
           <button
             onClick={() => setFormAberto(true)}
             className="flex items-center gap-1.5 rounded-full bg-burnt text-white text-sm px-4 py-2 hover:opacity-90"
@@ -32,7 +32,7 @@ export default function MemoriasPage() {
         )}
       </header>
 
-      {formAberto && (
+      {souAdmin && formAberto && (
         <FormularioMemoria onFechar={() => setFormAberto(false)} onSalvar={adicionarMemoria} />
       )}
 
