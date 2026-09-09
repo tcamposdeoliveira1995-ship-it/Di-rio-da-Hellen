@@ -45,13 +45,13 @@ export default function CadastroForm() {
         setErro(
           error.message?.includes("already registered") || error.status === 422
             ? "Já existe uma conta com esse telefone."
-            : "Não foi possível criar a conta. Tenta de novo?"
+            : `Não foi possível criar a conta. (${error.message || "erro desconhecido"})`
         );
         return;
       }
       setCadastrado(true);
-    } catch {
-      setErro("Não foi possível conectar. Tenta de novo?");
+    } catch (err) {
+      setErro(`Não foi possível conectar. (${err?.message || "erro desconhecido"})`);
     } finally {
       setEnviando(false);
     }
