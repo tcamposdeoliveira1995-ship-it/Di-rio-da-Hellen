@@ -12,7 +12,9 @@ import { FRASES_DO_DIA, tipoAgendaPorId } from "@/lib/constants";
 const TIPOS_PROXIMOS_PASSOS = ["consulta", "exame", "tratamento"];
 
 export default function HomePage() {
-  const { tratamentoInfo, ciclos, diario, agenda, carinhos, criancas, atualizarHumorHoje, souAdmin } = useStore();
+  const { tratamentoInfo, ciclos, diario, agenda, carinhos, criancas, atualizarHumorHoje, souAdmin, meuPerfil } =
+    useStore();
+  const primeiroNome = (meuPerfil?.nome || "Hellen").trim().split(" ")[0] || "Hellen";
 
   const carinhoNaoVisto = carinhos.find((c) => !c.visualizado);
   const autorCarinho = carinhoNaoVisto && criancas.find((c) => c.id === carinhoNaoVisto.crianca_id);
@@ -44,11 +46,13 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-2xl text-ink">Olá, Hellen 💗</h1>
-        <p className="text-muted text-sm">{frase}</p>
+        <h1 className="font-display text-2xl text-ink">Olá, {primeiroNome} 💗</h1>
+        <p className="text-muted text-sm">
+          {souAdmin ? frase : "Acompanhe essa trajetória com a Hellen."}
+        </p>
         {dataInicioJornada && (
           <p className="mt-2 inline-block text-xs font-medium text-burnt bg-blush-soft rounded-full px-3 py-1">
-            Dia {dia} da minha jornada
+            Dia {dia} d{souAdmin ? "a minha" : "a jornada da Hellen"}
           </p>
         )}
       </header>

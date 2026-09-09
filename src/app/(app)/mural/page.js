@@ -89,8 +89,8 @@ function FormularioMural({ onFechar, onSalvar }) {
         </div>
 
         <p className="text-xs text-muted bg-cream rounded-xl px-3 py-2">
-          Como só a Hellen tem login por enquanto, quem quiser mandar uma mensagem passa pra ela
-          (ou pra quem estiver ajudando) registrar aqui em nome de quem escreveu.
+          Quem quiser mandar uma mensagem passa pra Hellen registrar aqui em nome de quem
+          escreveu.
         </p>
 
         <div className="grid grid-cols-2 gap-3">
