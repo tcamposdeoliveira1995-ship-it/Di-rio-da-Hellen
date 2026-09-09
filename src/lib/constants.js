@@ -13,6 +13,14 @@ export function humorPorId(id) {
   return HUMORES.find((h) => h.id === id) || null;
 }
 
+// Escala numérica pra plotar o humor num gráfico (1 = muito difícil,
+// 5 = bem) — a ordem em HUMORES já vai do melhor pro pior, então é só
+// inverter a posição.
+export function humorParaNumero(id) {
+  const indice = HUMORES.findIndex((h) => h.id === id);
+  return indice === -1 ? null : HUMORES.length - indice;
+}
+
 export const SINTOMAS_DISPONIVEIS = [
   { id: "cansaco", emoji: "😴", label: "Cansaço" },
   { id: "nausea", emoji: "🤢", label: "Náusea" },
@@ -56,7 +64,7 @@ export const TIPOS_AGENDA = [
   { id: "internacao", emoji: "🏥", label: "Internação" },
   { id: "retorno", emoji: "📋", label: "Retorno" },
   { id: "medicacao", emoji: "💉", label: "Medicação" },
-  { id: "pessoal", emoji: "🌷", label: "Compromisso pessoal" },
+  { id: "pessoal", emoji: "🌻", label: "Compromisso pessoal" },
 ];
 
 export function tipoAgendaPorId(id) {
@@ -69,7 +77,7 @@ export const CATEGORIAS_JORNADA = [
   { id: "tratamento", emoji: "💊", label: "Tratamento" },
   { id: "internacao", emoji: "🏥", label: "Internação" },
   { id: "diagnostico", emoji: "📋", label: "Diagnóstico" },
-  { id: "pessoal", emoji: "🌷", label: "Momento pessoal" },
+  { id: "pessoal", emoji: "🌻", label: "Momento pessoal" },
   { id: "conquista", emoji: "🏆", label: "Conquista" },
 ];
 
@@ -86,6 +94,35 @@ export const STATUS_CICLO = [
 export function statusCicloPorId(id) {
   return STATUS_CICLO.find((s) => s.id === id) || STATUS_CICLO[2];
 }
+
+export const STATUS_DUVIDA = [
+  { id: "quero_perguntar", emoji: "🟡", label: "Quero perguntar" },
+  { id: "respondida", emoji: "🟢", label: "Respondida" },
+];
+
+export function statusDuvidaPorId(id) {
+  return STATUS_DUVIDA.find((s) => s.id === id) || STATUS_DUVIDA[0];
+}
+
+export const CATEGORIAS_DOCUMENTO = [
+  { id: "laudos", emoji: "📄", label: "Laudos" },
+  { id: "exames", emoji: "🧪", label: "Exames" },
+  { id: "relatorios", emoji: "📋", label: "Relatórios" },
+  { id: "hospitalares", emoji: "🏥", label: "Documentos hospitalares" },
+  { id: "receitas", emoji: "💊", label: "Receitas" },
+  { id: "autorizacoes", emoji: "📑", label: "Autorizações" },
+  { id: "outros", emoji: "📎", label: "Outros" },
+];
+
+export function categoriaDocumentoPorId(id) {
+  return CATEGORIAS_DOCUMENTO.find((c) => c.id === id) || CATEGORIAS_DOCUMENTO[6];
+}
+
+export const PERIODOS_RESUMO = [
+  { id: "7", label: "Últimos 7 dias", dias: 7 },
+  { id: "15", label: "Últimos 15 dias", dias: 15 },
+  { id: "30", label: "Últimos 30 dias", dias: 30 },
+];
 
 export const FRASES_DO_DIA = [
   "Um dia de cada vez.",

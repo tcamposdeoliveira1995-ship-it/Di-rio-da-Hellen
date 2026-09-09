@@ -1,7 +1,9 @@
--- Diário da Hellen 🌷 — schema inicial (Etapa 1 / MVP)
+-- Diário da Hellen 🌷 — schema (Etapa 1 + Etapa 2)
 --
 -- Como aplicar: Supabase → SQL Editor → cole este arquivo inteiro → Run.
--- Pode rodar de novo sem problema (tudo usa "if not exists" / "or replace").
+-- Pode rodar de novo sem problema (tudo usa "if not exists" / "or replace") —
+-- se você já rodou a versão da Etapa 1, rodar de novo só adiciona as
+-- tabelas novas (duvidas, documentos) sem tocar no que já existe.
 --
 -- Cada tabela guarda user_id (o id do usuário logado no Supabase Auth) e
 -- tem Row Level Security ligada: cada pessoa só vê e edita as próprias
@@ -122,6 +124,33 @@ create table if not exists public.eventos_jornada (
 );
 
 -- ---------------------------------------------------------------------
+-- Minhas Dúvidas (Etapa 2)
+-- ---------------------------------------------------------------------
+create table if not exists public.duvidas (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  data date not null,
+  pergunta text not null,
+  status text not null default 'quero_perguntar', -- quero_perguntar | respondida
+  resposta text,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
+-- Documentos (Etapa 2) — pasta digital, além dos arquivos de exame
+-- ---------------------------------------------------------------------
+create table if not exists public.documentos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  categoria text not null default 'outros',
+  nome text not null,
+  data date,
+  observacao text,
+  arquivo_path text, -- caminho no Storage (bucket hellen-arquivos)
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
 -- Row Level Security — cada usuário só acessa as próprias linhas.
 -- ---------------------------------------------------------------------
 alter table public.tratamento_info enable row level security;
@@ -131,6 +160,8 @@ alter table public.sintomas enable row level security;
 alter table public.exames enable row level security;
 alter table public.agenda enable row level security;
 alter table public.eventos_jornada enable row level security;
+alter table public.duvidas enable row level security;
+alter table public.documentos enable row level security;
 
 do $$
 declare
@@ -138,7 +169,7 @@ declare
 begin
   foreach tabela in array array[
     'tratamento_info', 'ciclos', 'diario', 'sintomas',
-    'exames', 'agenda', 'eventos_jornada'
+    'exames', 'agenda', 'eventos_jornada', 'duvidas', 'documentos'
   ]
   loop
     execute format('drop policy if exists "dono_select" on public.%I', tabela);

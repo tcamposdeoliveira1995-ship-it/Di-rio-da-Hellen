@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Diário da Hellen 🌷",
+  title: "Diário da Hellen 🌻",
   description: "Painel pessoal para acompanhamento da jornada de tratamento.",
 };
 

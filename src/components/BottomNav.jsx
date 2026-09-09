@@ -19,7 +19,7 @@ export default function BottomNav() {
   return (
     <>
       <RegistrarMenu aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-2 pb-[env(safe-area-inset-bottom)]">
+      <nav className="no-print md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-2 pb-[env(safe-area-inset-bottom)]">
         <div className="grid grid-cols-5 items-center h-16">
           {antes.map((item) => (
             <ItemNav key={item.href} item={item} ativo={pathname === item.href} />

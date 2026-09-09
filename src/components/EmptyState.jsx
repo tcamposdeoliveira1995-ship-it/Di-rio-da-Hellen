@@ -1,4 +1,4 @@
-export default function EmptyState({ emoji = "🌷", titulo, descricao }) {
+export default function EmptyState({ emoji = "🌻", titulo, descricao }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
       <span className="text-3xl" aria-hidden>{emoji}</span>

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import ExamesClient from "./ExamesClient";
 
-export const metadata = { title: "Exames — Diário da Hellen 🌷" };
+export const metadata = { title: "Exames — Diário da Hellen 🌻" };
 
 export default function ExamesPage() {
   return (

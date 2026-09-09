@@ -18,9 +18,9 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden md:flex w-64 flex-col shrink-0 border-r border-line bg-surface px-4 py-6">
+    <aside className="no-print hidden md:flex w-64 flex-col shrink-0 border-r border-line bg-surface px-4 py-6">
       <div className="px-2 mb-8">
-        <p className="font-display text-lg text-burnt">🌷 Minha Jornada</p>
+        <p className="font-display text-lg text-burnt">🌻 Minha Jornada</p>
         <p className="text-xs text-muted">Diário da Hellen</p>
       </div>
 

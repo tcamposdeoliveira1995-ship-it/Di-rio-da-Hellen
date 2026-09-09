@@ -1,20 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --cream: #fbf5ef;
-  --surface: #ffffff;
-  --ink: #4a3a3d;
-  --muted: #8c797d;
-  --line: #ecdfe2;
-  --blush: #f1c9c8;
-  --blush-soft: #faeae9;
-  --burnt: #c07b74;
-  --burnt-soft: #f2ded9;
-  --lavender: #c7bce3;
-  --lavender-soft: #ede8f7;
-  --lilac: #e4d9f2;
-  --gold: #c39a4e;
-  --gold-soft: #f3e8cf;
+  /* Paleta girassol 🌻 — a Hellen ama girassol, então o painel inteiro
+     gira em torno de amarelo/dourado/laranja-queimado (as pétalas) e
+     marrom (o centro da flor), em vez do rosé/lavanda original do
+     escopo. Os nomes das variáveis ficaram os mesmos por conveniência
+     (menos coisa pra tocar no resto do código) — só os valores mudaram. */
+  --cream: #fdf6e3;
+  --surface: #fffdf7;
+  --ink: #4a3418;
+  --muted: #8a7145;
+  --line: #ecd98f;
+  --blush: #fbe9a8;
+  --blush-soft: #fdf3d2;
+  --burnt: #a5660d;
+  --burnt-soft: #f6e3c4;
+  /* Verde-folha — acompanha o caule/folhas do girassol; ainda sem uso nas
+     telas atuais, mas fica disponível pra próximas etapas (ex: Memórias,
+     Conquistas). */
+  --leaf: #6e8b3d;
+  --leaf-soft: #e8efd6;
+  --gold: #c9a227;
+  --gold-soft: #fbeec3;
+  /* Cores de dado dos gráficos da Evolução — mais saturadas que o resto da
+     paleta (que é de propósito suave, pra chrome de interface) porque
+     precisam de contraste e separação real contra o fundo claro. Validadas
+     com o script de acessibilidade da skill de dataviz (contraste,
+     distinção para daltonismo e "normal-vision floor" — ver conversa). */
+  --chart-humor: #9c3f3f;
+  --chart-energia: #b8860b;
+  --chart-sintomas: #7048a8;
   --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --font-sans: "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
@@ -29,11 +44,13 @@
   --color-blush-soft: var(--blush-soft);
   --color-burnt: var(--burnt);
   --color-burnt-soft: var(--burnt-soft);
-  --color-lavender: var(--lavender);
-  --color-lavender-soft: var(--lavender-soft);
-  --color-lilac: var(--lilac);
+  --color-leaf: var(--leaf);
+  --color-leaf-soft: var(--leaf-soft);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
+  --color-chart-humor: var(--chart-humor);
+  --color-chart-energia: var(--chart-energia);
+  --color-chart-sintomas: var(--chart-sintomas);
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
 }
@@ -46,6 +63,21 @@ body {
   background: var(--cream);
   color: var(--ink);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  position: relative;
+}
+
+/* Marca d'água de girassóis no fundo — bem sutil, só pra dar o clima,
+   sem brigar com a leitura do conteúdo por cima. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23EFC44A'%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(0 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(36 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(72 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(108 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(144 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(180 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(216 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(252 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(288 50 50)'/%3E%3Cellipse cx='50' cy='17' rx='8.5' ry='17' transform='rotate(324 50 50)'/%3E%3C/g%3E%3Ccircle cx='50' cy='50' r='15' fill='%236B4A2A'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 160px 160px;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: -1;
 }
 
 h1, h2, h3, .font-display {
@@ -59,4 +91,12 @@ h1, h2, h3, .font-display {
 @media (prefers-color-scheme: dark) {
   /* O diário se mantém no tema claro e acolhedor mesmo no modo escuro do
      sistema — a paleta suave é parte da identidade visual do projeto. */
+}
+
+/* Usado pelo botão "Imprimir / Salvar PDF" do Resumo para Consulta — some
+   com a navegação na hora de imprimir, deixando só o conteúdo do resumo. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }

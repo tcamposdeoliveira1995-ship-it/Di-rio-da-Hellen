@@ -20,6 +20,8 @@ const ESTADO_VAZIO = {
   exames: [],
   agenda: [],
   eventosJornada: [],
+  duvidas: [],
+  documentos: [],
 };
 
 export function StoreProvider({ children }) {
@@ -33,7 +35,7 @@ export function StoreProvider({ children }) {
     setCarregando(true);
     setErro("");
     try {
-      const [tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada] =
+      const [tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada, duvidas, documentos] =
         await Promise.all([
           supabase.from("tratamento_info").select("*").eq("user_id", uid).maybeSingle(),
           supabase.from("ciclos").select("*").eq("user_id", uid).order("numero"),
@@ -42,9 +44,11 @@ export function StoreProvider({ children }) {
           supabase.from("exames").select("*").eq("user_id", uid).order("data", { ascending: false }),
           supabase.from("agenda").select("*").eq("user_id", uid).order("data"),
           supabase.from("eventos_jornada").select("*").eq("user_id", uid).order("data"),
+          supabase.from("duvidas").select("*").eq("user_id", uid).order("data", { ascending: false }),
+          supabase.from("documentos").select("*").eq("user_id", uid).order("data", { ascending: false }),
         ]);
 
-      const primeiroErro = [tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada]
+      const primeiroErro = [tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada, duvidas, documentos]
         .map((r) => r.error)
         .find(Boolean);
       if (primeiroErro) throw primeiroErro;
@@ -57,6 +61,8 @@ export function StoreProvider({ children }) {
         exames: exames.data || [],
         agenda: agenda.data || [],
         eventosJornada: eventosJornada.data || [],
+        duvidas: duvidas.data || [],
+        documentos: documentos.data || [],
       });
     } catch (err) {
       console.error("Erro ao carregar os dados do Supabase:", err);
@@ -204,6 +210,32 @@ export function StoreProvider({ children }) {
           ...d,
           eventosJornada: [...d.eventosJornada, data].sort((a, b) => a.data.localeCompare(b.data)),
         }));
+      },
+
+      async adicionarDuvida(duvida) {
+        const data = await tratarErro(
+          supabase.from("duvidas").insert({ ...duvida, user_id: userId }).select().single(),
+          "Não foi possível registrar a dúvida."
+        );
+        setDados((d) => ({ ...d, duvidas: [data, ...d.duvidas] }));
+      },
+
+      async atualizarDuvida(id, parcial) {
+        const data = await tratarErro(
+          supabase.from("duvidas").update(parcial).eq("id", id).select().single(),
+          "Não foi possível atualizar a dúvida."
+        );
+        setDados((d) => ({ ...d, duvidas: d.duvidas.map((x) => (x.id === id ? data : x)) }));
+      },
+
+      async adicionarDocumento(documento, arquivo) {
+        let arquivo_path = null;
+        if (arquivo) arquivo_path = await enviarArquivo(supabase, userId, arquivo);
+        const data = await tratarErro(
+          supabase.from("documentos").insert({ ...documento, arquivo_path, user_id: userId }).select().single(),
+          "Não foi possível adicionar o documento."
+        );
+        setDados((d) => ({ ...d, documentos: [data, ...d.documentos] }));
       },
     };
   }, [supabase, userId, dados]);

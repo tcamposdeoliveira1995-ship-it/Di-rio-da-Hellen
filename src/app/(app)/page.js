@@ -50,7 +50,7 @@ export default function HomePage() {
         )}
       </header>
 
-      <Card title="Hoje" icon="🌷">
+      <Card title="Hoje" icon="🌻">
         <p className="text-sm text-muted mb-3">{formatarDataLonga(hoje())}</p>
         <p className="text-sm text-ink mb-2">Como estou hoje?</p>
         <MoodPicker valor={entradaHoje?.humor} onChange={atualizarHumorHoje} size="lg" />
