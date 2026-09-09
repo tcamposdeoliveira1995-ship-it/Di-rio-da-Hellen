@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --cream: #fbf5ef;
+  --surface: #ffffff;
+  --ink: #4a3a3d;
+  --muted: #8c797d;
+  --line: #ecdfe2;
+  --blush: #f1c9c8;
+  --blush-soft: #faeae9;
+  --burnt: #c07b74;
+  --burnt-soft: #f2ded9;
+  --lavender: #c7bce3;
+  --lavender-soft: #ede8f7;
+  --lilac: #e4d9f2;
+  --gold: #c39a4e;
+  --gold-soft: #f3e8cf;
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  --font-sans: "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+@theme inline {
+  --color-cream: var(--cream);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-blush: var(--blush);
+  --color-blush-soft: var(--blush-soft);
+  --color-burnt: var(--burnt);
+  --color-burnt-soft: var(--burnt-soft);
+  --color-lavender: var(--lavender);
+  --color-lavender-soft: var(--lavender-soft);
+  --color-lilac: var(--lilac);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+* {
+  border-color: var(--line);
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), serif;
+}
+
+::selection {
+  background: var(--blush-soft);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* O diário se mantém no tema claro e acolhedor mesmo no modo escuro do
+     sistema — a paleta suave é parte da identidade visual do projeto. */
+}
