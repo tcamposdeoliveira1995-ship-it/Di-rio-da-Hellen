@@ -134,6 +134,23 @@ create table if not exists public.eventos_jornada (
 );
 
 -- ---------------------------------------------------------------------
+-- Minha História — capítulos maiores da caminhada ("como foi o
+-- diagnóstico", por exemplo), separados da lista rápida de eventos de
+-- "Minha Jornada". Cada capítulo tem espaço pra um texto mais longo e
+-- fotos, pensado pra contar uma parte da história, não só marcar uma
+-- data.
+-- ---------------------------------------------------------------------
+create table if not exists public.minha_historia (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  data date,
+  titulo text not null,
+  texto text,
+  fotos_paths text[] not null default '{}',
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
 -- Minhas Dúvidas (Etapa 2)
 -- ---------------------------------------------------------------------
 create table if not exists public.duvidas (
@@ -367,6 +384,7 @@ alter table public.sintomas enable row level security;
 alter table public.exames enable row level security;
 alter table public.agenda enable row level security;
 alter table public.eventos_jornada enable row level security;
+alter table public.minha_historia enable row level security;
 alter table public.duvidas enable row level security;
 alter table public.documentos enable row level security;
 alter table public.memorias enable row level security;
@@ -381,7 +399,7 @@ declare
 begin
   foreach tabela in array array[
     'tratamento_info', 'ciclos', 'diario', 'sintomas',
-    'exames', 'agenda', 'eventos_jornada', 'duvidas', 'documentos',
+    'exames', 'agenda', 'eventos_jornada', 'minha_historia', 'duvidas', 'documentos',
     'memorias', 'mural', 'contatos_apoio', 'criancas'
   ]
   loop

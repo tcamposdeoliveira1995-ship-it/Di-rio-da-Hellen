@@ -20,6 +20,7 @@ const ESTADO_VAZIO = {
   exames: [],
   agenda: [],
   eventosJornada: [],
+  minhaHistoria: [],
   duvidas: [],
   documentos: [],
   memorias: [],
@@ -59,7 +60,7 @@ export function StoreProvider({ children }) {
       }
 
       const [
-        tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
+        tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada, minhaHistoria,
         duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos, perfis,
       ] = await Promise.all([
         supabase.from("tratamento_info").select("*").maybeSingle(),
@@ -69,6 +70,7 @@ export function StoreProvider({ children }) {
         supabase.from("exames").select("*").order("data", { ascending: false }),
         supabase.from("agenda").select("*").order("data"),
         supabase.from("eventos_jornada").select("*").order("data"),
+        supabase.from("minha_historia").select("*").order("data"),
         supabase.from("duvidas").select("*").order("data", { ascending: false }),
         supabase.from("documentos").select("*").order("data", { ascending: false }),
         supabase.from("memorias").select("*").order("data", { ascending: false }),
@@ -80,7 +82,7 @@ export function StoreProvider({ children }) {
       ]);
 
       const primeiroErro = [
-        tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada,
+        tratamento, ciclos, diario, sintomas, exames, agenda, eventosJornada, minhaHistoria,
         duvidas, documentos, memorias, mural, contatosApoio, criancas, carinhos, perfis,
       ].map((r) => r.error).find(Boolean);
       if (primeiroErro) throw primeiroErro;
@@ -93,6 +95,7 @@ export function StoreProvider({ children }) {
         exames: exames.data || [],
         agenda: agenda.data || [],
         eventosJornada: eventosJornada.data || [],
+        minhaHistoria: minhaHistoria.data || [],
         duvidas: duvidas.data || [],
         documentos: documentos.data || [],
         memorias: memorias.data || [],
@@ -257,6 +260,23 @@ export function StoreProvider({ children }) {
         setDados((d) => ({
           ...d,
           eventosJornada: [...d.eventosJornada, data].sort((a, b) => a.data.localeCompare(b.data)),
+        }));
+      },
+
+      // Capítulos de "Minha História" — separados da lista rápida de
+      // eventos, pra quem quiser contar uma parte da caminhada com mais
+      // espaço (ex: como foi o diagnóstico), com fotos se quiser.
+      async adicionarHistoria(capitulo, fotosNovas = []) {
+        const fotos_paths = fotosNovas.length
+          ? await Promise.all(fotosNovas.map((arquivo) => enviarArquivo(supabase, userId, arquivo)))
+          : [];
+        const data = await tratarErro(
+          supabase.from("minha_historia").insert({ ...capitulo, fotos_paths, user_id: userId }).select().single(),
+          "Não foi possível salvar esse capítulo."
+        );
+        setDados((d) => ({
+          ...d,
+          minhaHistoria: [...d.minhaHistoria, data].sort((a, b) => (a.data || "").localeCompare(b.data || "")),
         }));
       },
 

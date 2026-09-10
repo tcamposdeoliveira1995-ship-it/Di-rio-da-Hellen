@@ -1,5 +1,5 @@
 import {
-  Home, Sprout, BookHeart, Pill, Stethoscope, FlaskConical, CalendarDays,
+  Home, Sprout, BookOpenText, BookHeart, Pill, Stethoscope, FlaskConical, CalendarDays,
   CircleHelp, LineChart, ClipboardList, FolderOpen,
   Image, Trophy, Heart, Users, Palette, UsersRound,
 } from "lucide-react";
@@ -8,6 +8,7 @@ import {
 export const NAV_ITEMS = [
   { href: "/", label: "Início", emoji: "🏠", icon: Home },
   { href: "/jornada", label: "Minha Jornada", emoji: "🌱", icon: Sprout },
+  { href: "/minha-historia", label: "Minha História", emoji: "📜", icon: BookOpenText },
   { href: "/diario", label: "Diário", emoji: "📖", icon: BookHeart },
   { href: "/tratamento", label: "Tratamento", emoji: "💊", icon: Pill },
   { href: "/sintomas", label: "Sintomas", emoji: "🩺", icon: Stethoscope },
