@@ -20,11 +20,13 @@ export default function CarinhosPage() {
     reagirCarinho,
     favoritarCarinho,
     tornarVisivelCarinho,
+    enviarCarinhoFamilia,
     souAdmin,
   } = useStore();
   const [filtro, setFiltro] = useState("todos");
   const [gerenciarAberto, setGerenciarAberto] = useState(criancas.length === 0);
   const [formAberto, setFormAberto] = useState(false);
+  const [enviarAberto, setEnviarAberto] = useState(false);
 
   // Os carinhos são recadinhos/desenhos endereçados à Hellen — por padrão
   // só ela vê. Quem é "visualizador" só recebe (o próprio banco, via RLS,
@@ -46,6 +48,24 @@ export default function CarinhosPage() {
             : "Os carinhos que a Hellen escolheu compartilhar com a família."}
         </p>
       </header>
+
+      {!souAdmin && (
+        <Card>
+          {enviarAberto ? (
+            <FormularioCarinhoFamilia
+              onFechar={() => setEnviarAberto(false)}
+              onSalvar={enviarCarinhoFamilia}
+            />
+          ) : (
+            <button
+              onClick={() => setEnviarAberto(true)}
+              className="flex items-center gap-1.5 text-sm text-burnt font-medium"
+            >
+              <Plus size={16} /> Mandar um carinho pra Hellen
+            </button>
+          )}
+        </Card>
+      )}
 
       {souAdmin && (
       <Card
@@ -229,6 +249,69 @@ function FormularioCrianca({ onFechar, onSalvar }) {
   );
 }
 
+function FormularioCarinhoFamilia({ onFechar, onSalvar }) {
+  const [mensagem, setMensagem] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [enviado, setEnviado] = useState(false);
+
+  async function aoSalvar(e) {
+    e.preventDefault();
+    setErro("");
+    setSalvando(true);
+    try {
+      await onSalvar(mensagem);
+      setEnviado(true);
+    } catch (err) {
+      setErro(err.message || "Não foi possível enviar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  if (enviado) {
+    return (
+      <div className="text-center py-2">
+        <p className="text-sm text-ink">💌 Carinho enviado! A Hellen vai ver.</p>
+        <p className="text-xs text-muted mt-1">
+          Ele só aparece pra família se ela escolher compartilhar — mas você continua vendo o que mandou.
+        </p>
+        <button onClick={onFechar} className="text-xs text-burnt mt-3 hover:underline">
+          Fechar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={aoSalvar} className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-ink">Mandar um carinho</p>
+        <button type="button" onClick={onFechar} aria-label="Fechar">
+          <X size={16} className="text-muted" />
+        </button>
+      </div>
+      <textarea
+        required
+        rows={3}
+        value={mensagem}
+        onChange={(e) => setMensagem(e.target.value)}
+        placeholder="Escreva uma mensagem de carinho pra Hellen..."
+        className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm resize-none"
+      />
+      {erro && <p className="text-xs text-burnt">{erro}</p>}
+      <button
+        type="submit"
+        disabled={salvando}
+        className="flex items-center gap-2 rounded-xl bg-burnt text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
+      >
+        {salvando && <Loader2 size={14} className="animate-spin" />}
+        Enviar
+      </button>
+    </form>
+  );
+}
+
 function CarinhoCard({ carinho, autor, onReagir, onFavoritar, onTornarVisivel, souAdmin }) {
   const [url, setUrl] = useState(null);
 
@@ -252,7 +335,8 @@ function CarinhoCard({ carinho, autor, onReagir, onFavoritar, onTornarVisivel, s
       )}
       {carinho.mensagem && <p className="text-sm text-ink italic">&ldquo;{carinho.mensagem}&rdquo;</p>}
       <p className="text-xs text-muted mt-2">
-        De {autor ? `${autor.avatar_emoji} ${autor.nome}` : "alguém"} · {formatarDataLonga(carinho.created_at?.slice(0, 10))}
+        De {autor?.nome || carinho.autor_nome ? `${autor?.avatar_emoji || "💌"} ${autor?.nome || carinho.autor_nome}` : "alguém"}{" "}
+        · {formatarDataLonga(carinho.created_at?.slice(0, 10))}
       </p>
 
       <div className="flex items-center gap-2 mt-3">

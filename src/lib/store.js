@@ -379,6 +379,24 @@ export function StoreProvider({ children }) {
         setDados((d) => ({ ...d, carinhos: d.carinhos.map((c) => (c.id === id ? data : c)) }));
       },
 
+      // Qualquer pessoa aprovada (admin ou visualizador) manda um carinho
+      // pra Hellen direto pelo painel, sem passar pelo Cantinho da Helô.
+      // Não precisa dizer pra quem é — o gatilho no banco já sabe (ver
+      // "definir_destinatario_carinho" no schema.sql). Fica invisível pra
+      // família até a Hellen decidir compartilhar, mas quem mandou sempre
+      // consegue ver o que escreveu.
+      async enviarCarinhoFamilia(mensagem) {
+        const data = await tratarErro(
+          supabase
+            .from("carinhos")
+            .insert({ autor_perfil_id: userId, tipo: "recado", mensagem })
+            .select()
+            .single(),
+          "Não foi possível enviar o carinho."
+        );
+        setDados((d) => ({ ...d, carinhos: [data, ...d.carinhos] }));
+      },
+
       // Admin aprova (ou reprova/revoga) alguém — só quem já é admin
       // consegue de fato gravar isso, o RLS que garante (ver
       // "perfis_update" no schema.sql).

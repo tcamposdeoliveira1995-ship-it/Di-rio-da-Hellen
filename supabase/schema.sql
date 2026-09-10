@@ -212,7 +212,10 @@ create table if not exists public.contatos_apoio (
 -- é a própria Hellen, autenticada. As gravações feitas PELA criança
 -- (inserir em "carinhos") passam por uma rota do servidor usando a
 -- chave secreta do Supabase — por isso não existe policy de "insert"
--- pública aqui, só as de leitura/atualização da Hellen.
+-- pública pra esse caminho, só as de leitura/atualização da Hellen. Quem
+-- tem conta de família de verdade (perfis) também consegue mandar
+-- carinho, mas direto pelo RLS — ver a policy "familia_insert" mais
+-- abaixo, definida perto de "perfis" já existir.
 -- ---------------------------------------------------------------------
 create table if not exists public.criancas (
   id uuid primary key default gen_random_uuid(),
@@ -228,7 +231,10 @@ create table if not exists public.criancas (
 create table if not exists public.carinhos (
   id uuid primary key default gen_random_uuid(),
   destinatario_user_id uuid not null references auth.users (id) on delete cascade,
-  crianca_id uuid not null references public.criancas (id) on delete cascade,
+  -- Um carinho vem OU de uma criança do Cantinho (sem login) OU de uma
+  -- conta de família de verdade (com login, coluna autor_perfil_id
+  -- adicionada mais abaixo — só depois de "perfis" existir).
+  crianca_id uuid references public.criancas (id) on delete cascade,
   tipo text not null, -- desenho | recado
   mensagem text,
   arquivo_path text, -- caminho no Storage (bucket hellen-arquivos), só quando tipo = desenho
@@ -242,6 +248,7 @@ create table if not exists public.carinhos (
 );
 
 alter table public.carinhos add column if not exists visivel_para_familia boolean not null default false;
+alter table public.carinhos alter column crianca_id drop not null;
 
 -- ---------------------------------------------------------------------
 -- Acesso familiar — vários usuários de verdade (nome + telefone + senha,
@@ -287,6 +294,20 @@ as $$
   select exists (
     select 1 from public.perfis where id = auth.uid() and papel in ('admin', 'visualizador')
   );
+$$;
+
+-- security definer pelo mesmo motivo de is_admin()/pode_visualizar(): um
+-- visualizador não tem permissão de ler a linha da Hellen em "perfis"
+-- (só a própria), então sem bypassar o RLS aqui ele nunca conseguiria
+-- descobrir pra quem endereçar um carinho.
+create or replace function public.id_da_admin()
+returns uuid
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select id from public.perfis where papel = 'admin' limit 1;
 $$;
 
 drop policy if exists "perfis_select" on public.perfis;
@@ -392,22 +413,78 @@ begin
   end loop;
 end $$;
 
+-- Coluna de quem mandou o carinho quando vem de uma conta de família de
+-- verdade (com login), em vez de uma criança do Cantinho — só dá pra
+-- criar agora porque "perfis" já existe nesse ponto do arquivo.
+alter table public.carinhos add column if not exists autor_perfil_id uuid references public.perfis (id) on delete cascade;
+-- Cópia do nome de quem mandou, tirada na hora do envio. É de propósito
+-- que isso não vem de um join com "perfis" na hora de exibir: o RLS de
+-- "perfis" só deixa cada visualizador ler a própria linha (não a dos
+-- outros), então sem essa cópia um carinho compartilhado pela Hellen
+-- apareceria sem nome nenhum pra quem não seja quem mandou.
+alter table public.carinhos add column if not exists autor_nome text;
+
+alter table public.carinhos drop constraint if exists carinhos_tem_autor;
+alter table public.carinhos add constraint carinhos_tem_autor
+  check (crianca_id is not null or autor_perfil_id is not null);
+
+-- Quando o carinho vem de uma conta de família (autor_perfil_id
+-- preenchido), preenche o destinatário e o nome sozinho — quem manda não
+-- precisa (e não conseguiria: RLS de "perfis" não deixa um visualizador
+-- ler a linha da Hellen nem a de outra pessoa da família) descobrir isso
+-- antes de enviar.
+create or replace function public.definir_destinatario_carinho()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.autor_perfil_id is not null then
+    new.destinatario_user_id := public.id_da_admin();
+    if new.autor_nome is null then
+      select nome into new.autor_nome from public.perfis where id = new.autor_perfil_id;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_carinho_familia_insert on public.carinhos;
+create trigger on_carinho_familia_insert
+  before insert on public.carinhos
+  for each row execute function public.definir_destinatario_carinho();
+
 -- "carinhos" é parecido, mas com uma diferença: um carinho é endereçado
 -- à Hellen, então por padrão só ela (admin) vê. Quem é "visualizador"
--- só enxerga um carinho se ela marcou visivel_para_familia = true nele
--- — e essa regra é aplicada aqui no banco, não só escondida na tela.
--- Reagir, favoritar, apagar e tornar visível continuam só admin.
--- Continua sem policy de insert: quem grava um carinho novo é a rota do
--- servidor, com a service role key, que ignora RLS.
+-- só enxerga um carinho se ela marcou visivel_para_familia = true nele,
+-- ou se foi ela mesma quem mandou (sempre vê o que escreveu) — e essa
+-- regra é aplicada aqui no banco, não só escondida na tela. Reagir,
+-- favoritar, apagar e tornar visível continuam só admin. Um carinho
+-- vindo do Cantinho (sem login) continua só pela rota do servidor, com a
+-- service role key — a policy de insert daqui é só pra quem tem conta de
+-- verdade mandando um carinho pra Hellen pelo próprio painel.
 drop policy if exists "dono_select" on public.carinhos;
 drop policy if exists "dono_update" on public.carinhos;
 drop policy if exists "dono_delete" on public.carinhos;
 drop policy if exists "familia_select" on public.carinhos;
+drop policy if exists "familia_insert" on public.carinhos;
 drop policy if exists "admin_update" on public.carinhos;
 drop policy if exists "admin_delete" on public.carinhos;
 
 create policy "familia_select" on public.carinhos for select
-  using (public.is_admin() or (public.pode_visualizar() and visivel_para_familia));
+  using (
+    public.is_admin()
+    or (public.pode_visualizar() and visivel_para_familia)
+    or autor_perfil_id = auth.uid()
+  );
+create policy "familia_insert" on public.carinhos for insert
+  with check (
+    public.pode_visualizar()
+    and autor_perfil_id = auth.uid()
+    and crianca_id is null
+    and destinatario_user_id = public.id_da_admin()
+  );
 create policy "admin_update" on public.carinhos for update
   using (public.is_admin());
 create policy "admin_delete" on public.carinhos for delete
