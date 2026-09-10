@@ -35,10 +35,13 @@ export default function RecadoPage() {
       formData.append("mensagem", mensagem);
 
       const resposta = await fetch("/api/cantinho/enviar", { method: "POST", body: formData });
-      if (!resposta.ok) throw new Error();
+      if (!resposta.ok) {
+        const corpo = await resposta.json().catch(() => null);
+        throw new Error(corpo?.error || "Não consegui enviar. Tenta de novo?");
+      }
       setEnviado(true);
-    } catch {
-      setErro("Não consegui enviar. Tenta de novo?");
+    } catch (err) {
+      setErro(err.message || "Não consegui enviar. Tenta de novo?");
     } finally {
       setEnviando(false);
     }

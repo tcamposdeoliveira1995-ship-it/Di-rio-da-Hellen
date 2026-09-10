@@ -215,10 +215,13 @@ export default function DesenharPage() {
       formData.append("imagem", blob, "desenho.png");
 
       const resposta = await fetch("/api/cantinho/enviar", { method: "POST", body: formData });
-      if (!resposta.ok) throw new Error();
+      if (!resposta.ok) {
+        const corpo = await resposta.json().catch(() => null);
+        throw new Error(corpo?.error || "Não consegui enviar. Tenta de novo?");
+      }
       setEtapa("enviado");
-    } catch {
-      setErro("Não consegui enviar. Tenta de novo?");
+    } catch (err) {
+      setErro(err.message || "Não consegui enviar. Tenta de novo?");
     } finally {
       setEnviando(false);
     }
