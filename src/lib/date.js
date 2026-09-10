@@ -1,8 +1,20 @@
 // Helpers de data — tudo em horário local do navegador e formatado em
 // pt-BR, já que é um diário pessoal de uma única pessoa.
 
+// Converte um Date pro formato YYYY-MM-DD usando o horário LOCAL do
+// aparelho (getFullYear/getMonth/getDate), nunca toISOString() — esse
+// método converte pra UTC antes de gerar a data, e horário de Brasília é
+// UTC-3: das 21h à meia-noite, o "hoje" em UTC já virou amanhã. Foi
+// exatamente esse bug que fazia a data mudar cedo demais à noite.
+export function paraIso(data) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 export function hoje() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return paraIso(new Date());
 }
 
 export function formatarData(iso, opcoes) {

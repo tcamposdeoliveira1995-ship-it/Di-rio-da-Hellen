@@ -6,13 +6,13 @@ import { ChevronLeft, ChevronRight, Plus, X, Loader2, Trash2 } from "lucide-reac
 import Card from "@/components/Card";
 import EmptyState from "@/components/EmptyState";
 import { useStore } from "@/lib/store";
-import { hoje, formatarDataLonga, diasNoMes, NOMES_MES, NOMES_DIA_SEMANA } from "@/lib/date";
+import { hoje, paraIso, formatarDataLonga, diasNoMes, NOMES_MES, NOMES_DIA_SEMANA } from "@/lib/date";
 import { TIPOS_AGENDA, tipoAgendaPorId } from "@/lib/constants";
 
 function amanha() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  return paraIso(d);
 }
 
 export default function AgendaClient() {

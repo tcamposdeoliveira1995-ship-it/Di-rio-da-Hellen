@@ -1,4 +1,4 @@
-import { hoje } from "./date";
+import { hoje, paraIso } from "./date";
 
 // Calcula o intervalo [inicio, fim] (datas ISO, inclusive) a partir da
 // seleção do <SeletorPeriodo/> — usado tanto na Evolução quanto no Resumo
@@ -10,7 +10,7 @@ export function calcularIntervalo(selecao) {
   }
   const d = new Date();
   d.setDate(d.getDate() - (Number(selecao.dias) - 1));
-  return { inicio: d.toISOString().slice(0, 10), fim };
+  return { inicio: paraIso(d), fim };
 }
 
 export function dentroDoIntervalo(dataIso, intervalo) {
