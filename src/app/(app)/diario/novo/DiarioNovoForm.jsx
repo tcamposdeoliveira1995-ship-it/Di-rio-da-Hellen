@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Card from "@/components/Card";
@@ -27,6 +27,58 @@ export default function DiarioNovoForm() {
   const [foto, setFoto] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
+  const [restaurado, setRestaurado] = useState(false);
+
+  const rascunhoKey = `diario-rascunho-${data}`;
+
+  // Rascunho local: o celular às vezes recarrega a página sozinho quando a
+  // câmera abre (principalmente com pouca memória) — o que já derrubou um
+  // texto inteiro que a Hellen tinha escrito. Pra isso não acontecer de
+  // novo, o texto vai sendo salvo no aparelho enquanto ela digita, e volta
+  // sozinho se a página recarregar ou se ela sair sem querer.
+  useEffect(() => {
+    let raw;
+    try {
+      raw = window.localStorage.getItem(rascunhoKey);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    try {
+      const rascunho = JSON.parse(raw);
+      queueMicrotask(() => {
+        if (rascunho.humor !== undefined) setHumor(rascunho.humor);
+        if (rascunho.energia !== undefined) setEnergia(rascunho.energia);
+        if (rascunho.texto !== undefined) setTexto(rascunho.texto);
+        if (rascunho.algoBom !== undefined) setAlgoBom(rascunho.algoBom);
+        if (rascunho.dificuldade !== undefined) setDificuldade(rascunho.dificuldade);
+        if (rascunho.queroLembrar !== undefined) setQueroLembrar(rascunho.queroLembrar);
+        setRestaurado(true);
+      });
+    } catch {
+      // rascunho corrompido — ignora e segue com o que já veio do banco
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só quer rodar uma vez, ao montar, pra restaurar o rascunho
+  }, []);
+
+  useEffect(() => {
+    const temConteudo = texto || algoBom || dificuldade || queroLembrar || humor || energia;
+    const t = setTimeout(() => {
+      try {
+        if (temConteudo) {
+          window.localStorage.setItem(
+            rascunhoKey,
+            JSON.stringify({ humor, energia, texto, algoBom, dificuldade, queroLembrar })
+          );
+        } else {
+          window.localStorage.removeItem(rascunhoKey);
+        }
+      } catch {
+        // localStorage indisponível (modo privado, por exemplo) — sem rascunho, sem drama
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [rascunhoKey, humor, energia, texto, algoBom, dificuldade, queroLembrar]);
 
   if (!souAdmin) {
     return (
@@ -53,6 +105,11 @@ export default function DiarioNovoForm() {
         },
         foto
       );
+      try {
+        window.localStorage.removeItem(rascunhoKey);
+      } catch {
+        // sem problema — o pior caso é um rascunho velho e vazio sobrando
+      }
       router.push("/diario");
     } catch (err) {
       setErro(err.message || "Não foi possível salvar.");
@@ -69,6 +126,12 @@ export default function DiarioNovoForm() {
         </h1>
         <p className="text-sm text-muted">{formatarDataLonga(data)}</p>
       </header>
+
+      {restaurado && (
+        <p className="text-sm text-leaf bg-leaf-soft rounded-xl px-3 py-2">
+          🌱 Recuperamos o que você tinha escrito antes da página recarregar.
+        </p>
+      )}
 
       <Card>
         <form onSubmit={aoSalvar} className="space-y-5">
