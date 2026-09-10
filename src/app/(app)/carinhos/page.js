@@ -176,7 +176,9 @@ function FormularioCrianca({ onFechar, onSalvar }) {
     e.preventDefault();
     setSalvando(true);
     try {
-      await onSalvar({ nome, avatar_emoji: avatar, ativo: true, pode_desenhar: true, pode_enviar_recado: true });
+      // Fica inativa até você ligar o "Ativo" — mesma lógica do resto do
+      // app: nada de acesso liberado sem uma decisão explícita sua.
+      await onSalvar({ nome, avatar_emoji: avatar, ativo: false, pode_desenhar: true, pode_enviar_recado: true });
       onFechar();
     } finally {
       setSalvando(false);
@@ -212,6 +214,9 @@ function FormularioCrianca({ onFechar, onSalvar }) {
         placeholder="Nome"
         className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm"
       />
+      <p className="text-xs text-muted">
+        Ela entra desativada — depois de salvar, toque em <strong>Ativo</strong> na lista pra liberar o acesso.
+      </p>
       <button
         type="submit"
         disabled={salvando}
