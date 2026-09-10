@@ -427,6 +427,23 @@ export function StoreProvider({ children }) {
         );
         setDados((d) => ({ ...d, perfis: d.perfis.map((p) => (p.id === id ? data : p)) }));
       },
+
+      // Recusar exclui a conta de verdade (não dá pra fazer só com RLS —
+      // não existe policy de delete em "perfis" de propósito). Pensado
+      // pra limpar cadastros que nunca deviam virar acesso, tipo spam de
+      // bot no /cadastro.
+      async recusarPessoa(id) {
+        const resposta = await fetch("/api/pessoas/recusar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+        if (!resposta.ok) {
+          const corpo = await resposta.json().catch(() => null);
+          throw new Error(corpo?.error || "Não foi possível recusar essa pessoa.");
+        }
+        setDados((d) => ({ ...d, perfis: d.perfis.filter((p) => p.id !== id) }));
+      },
     };
   }, [supabase, userId, dados]);
 

@@ -1,6 +1,8 @@
 // Cliente Supabase com a chave secreta (service role) — ignora todo o
-// RLS. Só existe pra uma coisa: deixar a Helô (que não tem login)
-// mandar um carinho pra Hellen através de uma rota de servidor.
+// RLS. Usado só em rotas de servidor que realmente precisam: deixar a
+// Helô (que não tem login) mandar carinho pra Hellen, e excluir a conta
+// de alguém que a admin recusou (RLS não tem policy de delete em
+// "perfis" de propósito, então isso não dá pra fazer só pelo cliente).
 //
 // NUNCA importe este arquivo de um componente "use client" — ele
 // precisa de SUPABASE_SECRET_KEY, uma variável só de servidor (sem

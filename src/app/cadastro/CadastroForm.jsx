@@ -11,6 +11,7 @@ export default function CadastroForm() {
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [site, setSite] = useState(""); // honeypot — ver comentário no campo, lá embaixo
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [cadastrado, setCadastrado] = useState(false);
@@ -18,6 +19,15 @@ export default function CadastroForm() {
   async function aoEnviar(e) {
     e.preventDefault();
     setErro("");
+
+    // Campo-armadilha: invisível pra gente, mas bots de formulário
+    // costumam preencher todo campo que acham. Se vier preenchido, finge
+    // que deu certo (sem criar conta nenhuma) — assim nem sabem que
+    // foram barrados, e a Hellen não recebe cadastro de spam pra recusar.
+    if (site) {
+      setCadastrado(true);
+      return;
+    }
 
     if (senha.length < 6) {
       setErro("A senha precisa ter pelo menos 6 caracteres.");
@@ -75,6 +85,21 @@ export default function CadastroForm() {
 
   return (
     <form onSubmit={aoEnviar} className="space-y-4">
+      {/* Honeypot: fora da tela pra gente, mas visível pra um preenchimento
+          automático de bot. Nunca recebe foco (tabIndex -1) nem aparece
+          pra leitor de tela (aria-hidden). */}
+      <div className="absolute -left-[9999px]" aria-hidden="true">
+        <label htmlFor="site">Deixe em branco</label>
+        <input
+          id="site"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={site}
+          onChange={(e) => setSite(e.target.value)}
+        />
+      </div>
+
       <div>
         <label htmlFor="nome" className="block text-sm text-muted mb-1">Nome</label>
         <input
