@@ -40,6 +40,11 @@ export default function DiarioPage() {
         <div className="space-y-4">
           {diario.map((entrada) => {
             const humor = humorPorId(entrada.humor);
+            const fotos = entrada.fotos_paths?.length
+              ? entrada.fotos_paths
+              : entrada.foto_path
+                ? [entrada.foto_path]
+                : [];
             return (
               <Card key={entrada.id}>
                 <div className="flex items-start gap-4">
@@ -65,12 +70,17 @@ export default function DiarioPage() {
                         <span aria-hidden>🌟</span> {entrada.algo_bom}
                       </p>
                     )}
-                    {entrada.foto_path && (
-                      <FotoPrivada
-                        caminho={entrada.foto_path}
-                        alt="Foto do dia"
-                        className="mt-3 w-full max-h-64"
-                      />
+                    {fotos.length > 0 && (
+                      <div className={`mt-3 grid gap-2 ${fotos.length === 1 ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3"}`}>
+                        {fotos.map((caminho) => (
+                          <FotoPrivada
+                            key={caminho}
+                            caminho={caminho}
+                            alt="Foto do dia"
+                            className={fotos.length === 1 ? "w-full max-h-64" : "w-full h-32"}
+                          />
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>

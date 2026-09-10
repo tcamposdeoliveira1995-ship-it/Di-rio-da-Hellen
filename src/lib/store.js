@@ -150,12 +150,22 @@ export function StoreProvider({ children }) {
     // função nomeada (não como método) pra continuar funcionando mesmo
     // quando a tela desestrutura só um pedaço do useStore(), ex.:
     // `const { atualizarHumorHoje } = useStore()`.
-    async function salvarDiario(entrada, arquivoFoto) {
-      let foto_path = entrada.foto_path;
-      if (arquivoFoto) {
-        foto_path = await enviarArquivo(supabase, userId, arquivoFoto);
+    // `fotosNovas`: arquivos ainda não enviados, pra subir agora.
+    // `fotosMantidas`: caminhos já salvos que continuam no registro (o que
+    // não vier aqui é porque a Hellen removeu aquela foto). Quando
+    // omitido (ex.: atualizarHumorHoje, que não mexe em foto), mantém as
+    // fotos que o registro já tinha.
+    async function salvarDiario(entrada, fotosNovas = [], fotosMantidas) {
+      let fotos_paths = fotosMantidas;
+      if (fotos_paths === undefined) {
+        const existente = dados.diario.find((e) => e.data === entrada.data);
+        fotos_paths = existente?.fotos_paths?.length ? existente.fotos_paths : existente?.foto_path ? [existente.foto_path] : [];
       }
-      const linha = { ...entrada, foto_path, user_id: userId };
+      if (fotosNovas.length) {
+        const enviadas = await Promise.all(fotosNovas.map((arquivo) => enviarArquivo(supabase, userId, arquivo)));
+        fotos_paths = [...fotos_paths, ...enviadas];
+      }
+      const linha = { ...entrada, fotos_paths, foto_path: fotos_paths[0] || null, user_id: userId };
       const data = await tratarErro(
         supabase.from("diario").upsert(linha, { onConflict: "user_id,data" }).select().single(),
         "Não foi possível salvar o registro do diário."

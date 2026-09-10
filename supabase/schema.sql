@@ -61,10 +61,20 @@ create table if not exists public.diario (
   algo_bom text,
   dificuldade text,
   quero_lembrar text,
-  foto_path text, -- caminho no Storage (bucket hellen-arquivos)
+  foto_path text, -- caminho no Storage (bucket hellen-arquivos) — mantida por compatibilidade, não é mais escrita; ver fotos_paths
+  fotos_paths text[] not null default '{}', -- várias fotos por dia (bucket hellen-arquivos)
   created_at timestamptz not null default now(),
   unique (user_id, data)
 );
+
+alter table public.diario add column if not exists fotos_paths text[] not null default '{}';
+
+-- migra a foto única de quem já usava o diário antes de existirem várias
+-- fotos por dia — idempotente: só mexe em quem ainda não tem a foto
+-- antiga dentro do array novo.
+update public.diario
+set fotos_paths = array[foto_path]
+where foto_path is not null and not (foto_path = any(fotos_paths));
 
 -- ---------------------------------------------------------------------
 -- Sintomas

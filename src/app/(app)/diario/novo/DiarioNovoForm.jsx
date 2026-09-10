@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import Card from "@/components/Card";
 import EmptyState from "@/components/EmptyState";
 import MoodPicker from "@/components/MoodPicker";
-import CampoArquivo from "@/components/CampoArquivo";
+import CampoFotos from "@/components/CampoFotos";
 import { useStore } from "@/lib/store";
 import { hoje, formatarDataLonga } from "@/lib/date";
 
@@ -24,7 +24,14 @@ export default function DiarioNovoForm() {
   const [algoBom, setAlgoBom] = useState(entradaExistente?.algo_bom || "");
   const [dificuldade, setDificuldade] = useState(entradaExistente?.dificuldade || "");
   const [queroLembrar, setQueroLembrar] = useState(entradaExistente?.quero_lembrar || "");
-  const [foto, setFoto] = useState(null);
+  const [fotosExistentes, setFotosExistentes] = useState(
+    entradaExistente?.fotos_paths?.length
+      ? entradaExistente.fotos_paths
+      : entradaExistente?.foto_path
+        ? [entradaExistente.foto_path]
+        : []
+  );
+  const [fotosNovas, setFotosNovas] = useState([]);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [restaurado, setRestaurado] = useState(false);
@@ -103,7 +110,8 @@ export default function DiarioNovoForm() {
           dificuldade,
           quero_lembrar: queroLembrar,
         },
-        foto
+        fotosNovas,
+        fotosExistentes
       );
       try {
         window.localStorage.removeItem(rascunhoKey);
@@ -169,11 +177,13 @@ export default function DiarioNovoForm() {
             onChange={setQueroLembrar}
           />
 
-          <CampoArquivo
-            label="Foto do dia (opcional)"
-            arquivo={foto}
-            onSelecionar={setFoto}
-            caminhoExistente={entradaExistente?.foto_path}
+          <CampoFotos
+            label="Fotos do dia (opcional)"
+            fotosExistentes={fotosExistentes}
+            fotosNovas={fotosNovas}
+            onAdicionar={(arquivos) => setFotosNovas((atual) => [...atual, ...arquivos])}
+            onRemoverExistente={(caminho) => setFotosExistentes((atual) => atual.filter((c) => c !== caminho))}
+            onRemoverNova={(indice) => setFotosNovas((atual) => atual.filter((_, i) => i !== indice))}
           />
 
           {erro && <p className="text-sm text-burnt">{erro}</p>}
